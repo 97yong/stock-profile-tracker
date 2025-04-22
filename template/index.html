@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>GitHub Pages용 주식 트래커</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input { width: 300px; padding: 8px; margin: 5px 0; }
+    button { padding: 10px 15px; margin-top: 10px; }
+    table { margin-top: 20px; border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+    th { background-color: #f2f2f2; }
+  </style>
+</head>
+<body>
+  <h1>📈 실시간 주식 트래커</h1>
+
+  <label>종목 코드:</label><br>
+  <input type="text" id="code" value="018290"><br>
+  <label>수량:</label><br>
+  <input type="number" id="qty" value="100"><br>
+  <label>평균 단가:</label><br>
+  <input type="number" id="avg" value="36000"><br>
+  <button onclick="trackStock()">조회</button>
+
+  <div id="output"></div>
+
+  <script>
+    const GAS_URL = "https://script.google.com/a/macros/snu.ac.kr/s/AKfycbxbzgAMUm2CMtMZ1ncl3GlrlQ3ZU9qa4FsP0X8lEoGQeFLOicAovJu4Q-gZE-B34Bb_tw/exec"; 
+    // Google Apps Script URL, replace with your own if needed
+    // const GAS_URL = "https://script.google.com/macros/s/AKfycbx.../exec"; // Example URL 
+
+
+//     function doPost(e) {
+//       try {
+//         const data = JSON.parse(e.postData.contents);
+//         const code = data.code;
+
+//         const url = `https://finance.naver.com/item/main.nhn?code=${code}`;
+//         const response = UrlFetchApp.fetch(url, {
+//           headers: {
+//             "User-Agent": "Mozilla/5.0"
+//           }
+//         });
+//         const html = response.getContentText();
+
+//         const match = html.match(/<p class="no_today">[\s\S]*?<span.*?>([\d,]+)<\/span>/);
+//         const price = match ? parseInt(match[1].replace(/,/g, '')) : null;
+
+//         return ContentService.createTextOutput(JSON.stringify({ code, price }))
+//           .setMimeType(ContentService.MimeType.JSON);
+
+//       } catch (err) {
+//         return ContentService.createTextOutput(JSON.stringify({ error: true }))
+//           .setMimeType(ContentService.MimeType.JSON);
+//       }
+// }
+
+
+    async function trackStock() {
+      const code = document.getElementById("code").value;
+      const qty = parseInt(document.getElementById("qty").value);
+      const avg = parseInt(document.getElementById("avg").value);
+
+      document.getElementById("output").innerHTML = "조회 중...";
+
+      try {
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify({ code })
+        });
+
+        const data = await res.json();
+
+        if (data.error || !data.price) {
+          document.getElementById("output").innerHTML = "가격 정보를 가져올 수 없습니다.";
+          return;
+        }
+
+        const price = data.price;
+        const value = price * qty;
+        const profit = ((price - avg) / avg * 100).toFixed(2);
+        const color = profit > 0 ? 'red' : profit < 0 ? 'blue' : 'black';
+
+        document.getElementById("output").innerHTML = `
+          <table>
+            <tr><th>종목 코드</th><th>현재가</th><th>수량</th><th>평균 단가</th><th>수익률</th><th>평가금액</th></tr>
+            <tr>
+              <td>${code}</td>
+              <td>${price.toLocaleString()}</td>
+              <td>${qty}</td>
+              <td>${avg.toLocaleString()}</td>
+              <td style="color:${color}">${profit}%</td>
+              <td>${value.toLocaleString()}</td>
+            </tr>
+          </table>
+        `;
+      } catch (err) {
+        document.getElementById("output").innerHTML = "에러 발생: " + err;
+      }
+    }
+  </script>
+</body>
+</html>
