@@ -2,74 +2,186 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>GitHub Pages용 주식 트래커</title>
+  <title>실시간 주식 수익률 계산기</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    input { width: 300px; padding: 8px; margin: 5px 0; }
-    button { padding: 10px 15px; margin-top: 10px; }
-    table { margin-top: 20px; border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
-    th { background-color: #f2f2f2; }
+    body { font-family: 'Malgun Gothic', Arial, sans-serif; padding: 20px; background: #fff; color: #222; }
+    input { width: 100px; padding: 6px; }
+    button { padding: 6px 10px; margin: 5px; cursor: pointer; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: center; }
+    th { background-color: #f5f5f5; font-weight: bold; color: #555; font-size: 14px; }
+    td { font-size: 14px; }
+    .price-up { color: red; font-weight: bold; }
+    .price-down { color: blue; font-weight: bold; }
+    .profit-up { color: red; }
+    .profit-down { color: blue; }
+    .total-row { font-weight: bold; background: #fafafa; border-top: 2px solid #666; }
   </style>
 </head>
 <body>
-  <h1>📈 실시간 주식 트래커</h1>
+  <h2>📈 실시간 주식 트래커</h2>
 
-  <label>종목 코드:</label><br>
-  <input type="text" id="code" value="018290"><br>
-  <label>수량:</label><br>
-  <input type="number" id="qty" value="100"><br>
-  <label>평균 단가:</label><br>
-  <input type="number" id="avg" value="36000"><br>
-  <button onclick="trackStock()">조회</button>
+  <table id="inputTable">
+    <thead>
+      <tr>
+        <th>종목 코드</th>
+        <th>보유 수량</th>
+        <th>평균 단가</th>
+        <th>삭제</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><input type="text" value="018290"></td>
+        <td><input type="number" value="100"></td>
+        <td><input type="number" value="35500"></td>
+        <td><button onclick="removeRow(this)">❌</button></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <button onclick="addRow()">➕ 행 추가</button>
+  <button onclick="trackStocks()">📊 전체 조회</button>
 
   <div id="output"></div>
+  <canvas id="stockChart" height="100"></canvas>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"; // <-- 여기에 배포된 Web App URL 입력
+    const WORKER_URL = "https://jolly-hall-61f4.313nara.workers.dev/";
 
-    async function trackStock() {
-      const code = document.getElementById("code").value;
-      const qty = parseInt(document.getElementById("qty").value);
-      const avg = parseInt(document.getElementById("avg").value);
-
-      document.getElementById("output").innerHTML = "조회 중...";
-
-      try {
-        const res = await fetch(GAS_URL, {
-          method: "POST",
-          body: JSON.stringify({ code })
-        });
-
-        const data = await res.json();
-
-        if (data.error || !data.price) {
-          document.getElementById("output").innerHTML = "가격 정보를 가져올 수 없습니다.";
-          return;
+    const ctx = document.getElementById("stockChart").getContext("2d");
+    const chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [{
+          label: "총 평가금액",
+          borderColor: "green",
+          data: []
+        }]
+      },
+      options: {
+        responsive: true,
+        animation: false,
+        scales: {
+          x: { display: true },
+          y: { display: true }
         }
-
-        const price = data.price;
-        const value = price * qty;
-        const profit = ((price - avg) / avg * 100).toFixed(2);
-        const color = profit > 0 ? 'red' : profit < 0 ? 'blue' : 'black';
-
-        document.getElementById("output").innerHTML = `
-          <table>
-            <tr><th>종목 코드</th><th>현재가</th><th>수량</th><th>평균 단가</th><th>수익률</th><th>평가금액</th></tr>
-            <tr>
-              <td>${code}</td>
-              <td>${price.toLocaleString()}</td>
-              <td>${qty}</td>
-              <td>${avg.toLocaleString()}</td>
-              <td style="color:${color}">${profit}%</td>
-              <td>${value.toLocaleString()}</td>
-            </tr>
-          </table>
-        `;
-      } catch (err) {
-        document.getElementById("output").innerHTML = "에러 발생: " + err;
       }
+    });
+
+    function addRow() {
+      const tbody = document.querySelector("#inputTable tbody");
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td><input type="text"></td>
+        <td><input type="number"></td>
+        <td><input type="number"></td>
+        <td><button onclick="removeRow(this)">❌</button></td>
+      `;
+      tbody.appendChild(row);
     }
+
+    function removeRow(button) {
+      const row = button.closest("tr");
+      row.remove();
+    }
+
+    async function trackStocks() {
+      const rows = document.querySelectorAll("#inputTable tbody tr");
+      let results = [];
+      let totalValue = 0;
+      let totalQty = 0;
+      let totalCost = 0;
+      let totalChange = 0;
+
+      for (const row of rows) {
+        const code = row.cells[0].querySelector("input").value.trim();
+        const qty = parseInt(row.cells[1].querySelector("input").value);
+        const avg = parseInt(row.cells[2].querySelector("input").value);
+
+        if (!code || !qty || !avg) continue;
+
+        try {
+          const res = await fetch(WORKER_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code })
+          });
+
+          const data = await res.json();
+
+          if (!data || !data.price) {
+            results.push(`<tr><td colspan="6">${code} - 가격 정보 없음</td></tr>`);
+          } else {
+            const name = code === "018290" ? "브이티" : code === "087010" ? "펩트론" : "디앤디파마텍";
+            const price = data.price;
+            const change = data.change;
+            const rate = data.rate;
+            const value = price * qty;
+            const profit = ((price - avg) / avg * 100).toFixed(2);
+
+            totalQty += qty;
+            totalValue += value;
+            totalCost += avg * qty;
+            totalChange += change * qty;
+
+            const priceClass = change > 0 ? 'price-up' : change < 0 ? 'price-down' : '';
+            const profitClass = profit > 0 ? 'profit-up' : profit < 0 ? 'profit-down' : '';
+            const rateSign = rate > 0 ? '+' : '';
+            const changeSymbol = change > 0 ? '▲' : change < 0 ? '▼' : '-';
+
+            results.push(`
+              <tr>
+                <td>${name}</td>
+                <td class="${priceClass}">${price.toLocaleString()} (${changeSymbol}${Math.abs(change).toLocaleString()})</td>
+                <td>${qty}</td>
+                <td>${avg.toLocaleString()}</td>
+                <td class="${profitClass}">${profit}%</td>
+                <td>${value.toLocaleString()}</td>
+              </tr>
+            `);
+          }
+        } catch (err) {
+          results.push(`<tr><td colspan="6">${code} - 오류 발생 (${err.message})</td></tr>`);
+        }
+      }
+
+      if (results.length === 0) return;
+
+      const totalRate = ((totalValue - totalCost) / totalCost * 100).toFixed(2);
+      const totalChangeSign = totalChange > 0 ? '▲' : totalChange < 0 ? '▼' : '-';
+      const totalRateSign = totalRate > 0 ? '+' : '';
+      const totalColor = totalChange > 0 ? 'red' : totalChange < 0 ? 'blue' : 'black';
+
+      const resultTable = `
+        <h3>📋 결과</h3>
+        <table>
+          <tr><th>종목명</th><th>현재가</th><th>수량</th><th>평균 단가</th><th>수익률</th><th>평가금액</th></tr>
+          ${results.join("")}
+          <tr class="total-row">
+            <td>전체</td>
+            <td style="color:${totalColor}">${totalChangeSign}${Math.abs(totalChange).toLocaleString()}</td>
+            <td>${totalQty}</td>
+            <td>-</td>
+            <td style="color:${totalColor}">${totalRateSign}${Math.abs(totalRate)}%</td>
+            <td>${totalValue.toLocaleString()}</td>
+          </tr>
+        </table>
+      `;
+
+      document.getElementById("output").innerHTML = resultTable;
+
+      const now = new Date().toLocaleTimeString();
+      chart.data.labels.push(now);
+      chart.data.datasets[0].data.push(totalValue);
+      chart.update();
+    }
+
+    setInterval(() => {
+      trackStocks();
+    }, 10000);
   </script>
 </body>
 </html>
