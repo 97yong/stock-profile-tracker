@@ -235,7 +235,10 @@
 
       const interval = isPro ? 30000 : 60000;
 
-      trackStocks();
+      // 🔁 최초 1회는 즉시 실행
+      await trackStocks();
+
+      // 이후부터는 주기적으로 실행
       trackTimer = setInterval(trackStocks, interval);
       stopTimer = setTimeout(() => {
         clearInterval(trackTimer);
@@ -244,8 +247,3 @@
         proStatus.textContent = "";
       }, 10 * 60 * 1000);
     }
-
-    // trackStocks 그대로 유지
-  </script>
-</body>
-</html>
