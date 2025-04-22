@@ -108,6 +108,9 @@
 <body>
   <h2>📈 Stock Tracker</h2>
 
+  <label for="password">🔐 Pro 모드 비밀번호:</label>
+  <input type="password" id="password" placeholder="비밀번호 입력" style="margin-bottom: 1rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
+
   <table id="inputTable">
     <thead>
       <tr>
@@ -174,6 +177,8 @@
     });
 
     let trackingStarted = false;
+    let trackTimer = null;
+    let stopTimer = null;
 
     function addRow() {
       const tbody = document.querySelector("#inputTable tbody");
@@ -193,11 +198,19 @@
     }
 
     function startTracking() {
-      if (!trackingStarted) {
-        trackingStarted = true;
-        trackStocks();
-        setInterval(trackStocks, 30000);
-      }
+      if (trackingStarted) return;
+      trackingStarted = true;
+      const password = document.getElementById("password").value;
+
+      const interval = password === "yong" ? 30000 : 60000; // 30초 or 1분
+
+      trackStocks();
+      trackTimer = setInterval(trackStocks, interval);
+      stopTimer = setTimeout(() => {
+        clearInterval(trackTimer);
+        alert("⏱️ 자동 업데이트가 종료되었습니다 (10분 경과)");
+        trackingStarted = false;
+      }, 10 * 60 * 1000);
     }
 
     async function trackStocks() {
