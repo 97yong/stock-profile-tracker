@@ -228,22 +228,22 @@
       const isPro = await verifyPassword(password);
       if (isPro) {
         localStorage.setItem("pro", "true");
-        proStatus.textContent = "✅ Pro 모드로 진입했습니다 (30초 업데이트)";
+        proStatus.textContent = "✅ Pro 모드로 진입했습니다 (10초 업데이트)";
       } else {
-        proStatus.textContent = "⏳ 일반 모드로 실행 중입니다 (1분 업데이트)";
+        proStatus.textContent = "⏳ 일반 모드로 실행 중입니다 (1분 업데이트) | 5분 후 자동종료 됩니다";
       }
 
-      const interval = isPro ? 30000 : 60000;
+      const interval = isPro ? 10000 : 60000;
 
       await trackStocks();
 
       trackTimer = setInterval(trackStocks, interval);
       stopTimer = setTimeout(() => {
         clearInterval(trackTimer);
-        alert("⏱️ 자동 업데이트가 종료되었습니다 (10분 경과)");
+        alert("⏱️ 자동 업데이트가 종료되었습니다 (5분 경과)");
         trackingStarted = false;
         proStatus.textContent = "";
-      }, 10 * 60 * 1000);
+      }, 5 * 60 * 1000);
     }
 
     async function trackStocks() {
