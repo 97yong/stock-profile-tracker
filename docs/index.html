@@ -26,36 +26,7 @@
   <div id="output"></div>
 
   <script>
-    const GAS_URL = "https://script.google.com/a/macros/snu.ac.kr/s/AKfycbxbzgAMUm2CMtMZ1ncl3GlrlQ3ZU9qa4FsP0X8lEoGQeFLOicAovJu4Q-gZE-B34Bb_tw/exec"; 
-    // Google Apps Script URL, replace with your own if needed
-    // const GAS_URL = "https://script.google.com/macros/s/AKfycbx.../exec"; // Example URL 
-
-
-//     function doPost(e) {
-//       try {
-//         const data = JSON.parse(e.postData.contents);
-//         const code = data.code;
-
-//         const url = `https://finance.naver.com/item/main.nhn?code=${code}`;
-//         const response = UrlFetchApp.fetch(url, {
-//           headers: {
-//             "User-Agent": "Mozilla/5.0"
-//           }
-//         });
-//         const html = response.getContentText();
-
-//         const match = html.match(/<p class="no_today">[\s\S]*?<span.*?>([\d,]+)<\/span>/);
-//         const price = match ? parseInt(match[1].replace(/,/g, '')) : null;
-
-//         return ContentService.createTextOutput(JSON.stringify({ code, price }))
-//           .setMimeType(ContentService.MimeType.JSON);
-
-//       } catch (err) {
-//         return ContentService.createTextOutput(JSON.stringify({ error: true }))
-//           .setMimeType(ContentService.MimeType.JSON);
-//       }
-// }
-
+    const GAS_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"; // <-- 여기에 배포된 Web App URL 입력
 
     async function trackStock() {
       const code = document.getElementById("code").value;
