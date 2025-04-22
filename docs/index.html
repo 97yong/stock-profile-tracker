@@ -2,21 +2,107 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>실시간 주식 수익률 계산기</title>
+  <title>주식 트래커</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: 'Malgun Gothic', Arial, sans-serif; padding: 20px; background: #fff; color: #222; }
-    input { width: 100px; padding: 6px; }
-    button { padding: 6px 10px; margin: 5px; cursor: pointer; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: center; }
-    th { background-color: #f5f5f5; font-weight: bold; color: #555; font-size: 14px; }
-    td { font-size: 14px; }
-    .price-up { color: red; font-weight: bold; }
-    .price-down { color: blue; font-weight: bold; }
-    .profit-up { color: red; }
-    .profit-down { color: blue; }
-    .total-row { font-weight: bold; background: #fafafa; border-top: 2px solid #666; }
+    :root {
+      --primary: #3182f6;
+      --danger: #ff3b30;
+      --profit: #007aff;
+      --bg: #f9fafb;
+      --text: #1c1c1e;
+      --gray: #a1a1aa;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 2rem;
+    }
+
+    h2 {
+      margin-bottom: 1rem;
+      font-size: 1.8rem;
+      color: var(--primary);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    th, td {
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background: #f0f4f8;
+      color: #374151;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    td {
+      font-size: 0.9rem;
+    }
+
+    .price-up {
+      color: var(--danger);
+      font-weight: 600;
+    }
+
+    .price-down {
+      color: var(--profit);
+      font-weight: 600;
+    }
+
+    .profit-up { color: var(--danger); font-weight: 600; }
+    .profit-down { color: var(--profit); font-weight: 600; }
+
+    .total-row {
+      background: #f9fbfc;
+      font-weight: 700;
+    }
+
+    .input-row input {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1.2rem;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .btn + .btn {
+      margin-left: 0.5rem;
+    }
+
+    canvas {
+      margin-top: 2rem;
+      background: white;
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
   </style>
 </head>
 <body>
@@ -32,32 +118,48 @@
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td><input type="text" value="018290"></td>
-        <td><input type="number" value="100"></td>
-        <td><input type="number" value="35500"></td>
+      <tr class="input-row">
+        <td><input type="text" value="005930"></td>
+        <td><input type="number" value="10"></td>
+        <td><input type="number" value="70000"></td>
+        <td><button onclick="removeRow(this)">❌</button></td>
+      </tr>
+      <tr class="input-row">
+        <td><input type="text" value="035720"></td>
+        <td><input type="number" value="5"></td>
+        <td><input type="number" value="100000"></td>
+        <td><button onclick="removeRow(this)">❌</button></td>
+      </tr>
+      <tr class="input-row">
+        <td><input type="text" value="000660"></td>
+        <td><input type="number" value="15"></td>
+        <td><input type="number" value="120000"></td>
         <td><button onclick="removeRow(this)">❌</button></td>
       </tr>
     </tbody>
   </table>
 
-  <button onclick="addRow()">➕ 행 추가</button>
-  <button onclick="trackStocks()">📊 전체 조회</button>
+  <div>
+    <button class="btn" onclick="addRow()">➕ 행 추가</button>
+    <button class="btn" onclick="startTracking()">📊 전체 조회</button>
+  </div>
 
   <div id="output"></div>
   <canvas id="stockChart" height="100"></canvas>
 
   <script>
     const WORKER_URL = "https://jolly-hall-61f4.313nara.workers.dev/";
-
     const ctx = document.getElementById("stockChart").getContext("2d");
+
     const chart = new Chart(ctx, {
       type: "line",
       data: {
         labels: [],
         datasets: [{
           label: "총 평가금액",
-          borderColor: "green",
+          borderColor: "#3182f6",
+          backgroundColor: "rgba(49,130,246,0.1)",
+          fill: true,
           data: []
         }]
       },
@@ -71,9 +173,12 @@
       }
     });
 
+    let trackingStarted = false;
+
     function addRow() {
       const tbody = document.querySelector("#inputTable tbody");
       const row = document.createElement("tr");
+      row.className = "input-row";
       row.innerHTML = `
         <td><input type="text"></td>
         <td><input type="number"></td>
@@ -84,8 +189,15 @@
     }
 
     function removeRow(button) {
-      const row = button.closest("tr");
-      row.remove();
+      button.closest("tr").remove();
+    }
+
+    function startTracking() {
+      if (!trackingStarted) {
+        trackingStarted = true;
+        trackStocks();
+        setInterval(trackStocks, 30000);
+      }
     }
 
     async function trackStocks() {
@@ -100,7 +212,6 @@
         const code = row.cells[0].querySelector("input").value.trim();
         const qty = parseInt(row.cells[1].querySelector("input").value);
         const avg = parseInt(row.cells[2].querySelector("input").value);
-
         if (!code || !qty || !avg) continue;
 
         try {
@@ -111,54 +222,47 @@
           });
 
           const data = await res.json();
+          const name = code;
+          const price = data.price;
+          const change = typeof data.change === "number" ? data.change : 0;
+          const rate = typeof data.rate === "number" ? data.rate : 0;
 
-          if (!data || !data.price) {
-            results.push(`<tr><td colspan="6">${code} - 가격 정보 없음</td></tr>`);
-          } else {
-            const name = code === "018290" ? "브이티" : code === "087010" ? "펩트론" : "디앤디파마텍";
-            const price = data.price;
-            const change = data.change;
-            const rate = data.rate;
-            const value = price * qty;
-            const profit = ((price - avg) / avg * 100).toFixed(2);
+          const value = price * qty;
+          const profit = ((price - avg) / avg * 100).toFixed(2);
 
-            totalQty += qty;
-            totalValue += value;
-            totalCost += avg * qty;
-            totalChange += change * qty;
+          totalQty += qty;
+          totalValue += value;
+          totalCost += avg * qty;
+          totalChange += change * qty;
 
-            const priceClass = change > 0 ? 'price-up' : change < 0 ? 'price-down' : '';
-            const profitClass = profit > 0 ? 'profit-up' : profit < 0 ? 'profit-down' : '';
-            const rateSign = rate > 0 ? '+' : '';
-            const changeSymbol = change > 0 ? '▲' : change < 0 ? '▼' : '-';
+          const priceClass = change > 0 ? 'price-up' : change < 0 ? 'price-down' : '';
+          const profitClass = profit > 0 ? 'profit-up' : profit < 0 ? 'profit-down' : '';
+          const changeSymbol = change > 0 ? '▲' : change < 0 ? '▼' : '-';
 
-            results.push(`
-              <tr>
-                <td>${name}</td>
-                <td class="${priceClass}">${price.toLocaleString()} (${changeSymbol}${Math.abs(change).toLocaleString()})</td>
-                <td>${qty}</td>
-                <td>${avg.toLocaleString()}</td>
-                <td class="${profitClass}">${profit}%</td>
-                <td>${value.toLocaleString()}</td>
-              </tr>
-            `);
-          }
+          results.push(`
+            <tr>
+              <td>${name}</td>
+              <td class="${priceClass}">${price.toLocaleString()} (${changeSymbol}${Math.abs(change).toLocaleString()})</td>
+              <td>${qty}</td>
+              <td>${avg.toLocaleString()}</td>
+              <td class="${profitClass}">${profit}%</td>
+              <td>${value.toLocaleString()}</td>
+            </tr>
+          `);
         } catch (err) {
           results.push(`<tr><td colspan="6">${code} - 오류 발생 (${err.message})</td></tr>`);
         }
       }
 
-      if (results.length === 0) return;
-
       const totalRate = ((totalValue - totalCost) / totalCost * 100).toFixed(2);
       const totalChangeSign = totalChange > 0 ? '▲' : totalChange < 0 ? '▼' : '-';
       const totalRateSign = totalRate > 0 ? '+' : '';
-      const totalColor = totalChange > 0 ? 'red' : totalChange < 0 ? 'blue' : 'black';
+      const totalColor = totalChange > 0 ? 'var(--danger)' : totalChange < 0 ? 'var(--profit)' : 'black';
 
-      const resultTable = `
+      document.getElementById("output").innerHTML = `
         <h3>📋 결과</h3>
         <table>
-          <tr><th>종목명</th><th>현재가</th><th>수량</th><th>평균 단가</th><th>수익률</th><th>평가금액</th></tr>
+          <tr><th>종목코드</th><th>현재가</th><th>수량</th><th>평균 단가</th><th>수익률</th><th>평가금액</th></tr>
           ${results.join("")}
           <tr class="total-row">
             <td>전체</td>
@@ -171,17 +275,11 @@
         </table>
       `;
 
-      document.getElementById("output").innerHTML = resultTable;
-
       const now = new Date().toLocaleTimeString();
       chart.data.labels.push(now);
       chart.data.datasets[0].data.push(totalValue);
       chart.update();
     }
-
-    setInterval(() => {
-      trackStocks();
-    }, 30000);
   </script>
 </body>
 </html>
