@@ -236,14 +236,15 @@
       const interval = isPro ? 10000 : 60000;
 
       await trackStocks();
-
       trackTimer = setInterval(trackStocks, interval);
-      stopTimer = setTimeout(() => {
-        clearInterval(trackTimer);
-        alert("⏱️ 자동 업데이트가 종료되었습니다 (5분 경과)");
-        trackingStarted = false;
-        proStatus.textContent = "";
-      }, 5 * 60 * 1000);
+      if (!isPro) {
+        stopTimer = setTimeout(() => {
+          clearInterval(trackTimer);
+          alert("⏱️ 자동 업데이트가 종료되었습니다 (5분 경과)");
+          trackingStarted = false;
+          proStatus.textContent = "";
+        }, 5 * 60 * 1000);
+      }
     }
 
     async function trackStocks() {
