@@ -248,6 +248,50 @@
     }
 
     async function trackStocks() {
+      
+      const now = new Date();
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+      const currentTime = hour * 60 + minute;
+
+      const marketStart = 9 * 60;        // 오전 9시
+      const marketEnd = 15 * 60 + 30;    // 오후 3시 30분
+
+      if (currentTime < marketStart) {
+        clearInterval(trackTimer);
+        clearTimeout(stopTimer);
+        trackingStarted = false;
+        alert("📉 정규 시장 시간 전입니다. (오전 9시 이후부터 조회 가능)");
+        return;
+      }
+
+      if (currentTime > marketEnd) {
+        clearInterval(trackTimer);
+        clearTimeout(stopTimer);
+        trackingStarted = false;
+
+        // ✨ 수익 계산
+        const rows = document.querySelectorAll("#inputTable tbody tr");
+        let totalValue = 0;
+        let totalCost = 0;
+
+        for (const row of rows) {
+          const qty = parseInt(row.cells[1].querySelector("input").value);
+          const avg = parseInt(row.cells[2].querySelector("input").value);
+          const value = parseFloat(row.cells[5]?.textContent.replace(/,/g, '') || 0);
+          if (!isNaN(qty) && !isNaN(avg)) {
+            totalCost += avg * qty;
+          }
+          totalValue += isNaN(value) ? 0 : value;
+        }
+
+        const profit = totalValue - totalCost;
+        const sign = profit > 0 ? "+" : "";
+        alert(`📈 정규 시장이 종료되었습니다.\n오늘 총 수익 금액은 ${sign}${profit.toLocaleString()}원입니다.`);
+        return;
+      }
+
+
       const rows = document.querySelectorAll("#inputTable tbody tr");
       let results = [];
       let totalValue = 0;
@@ -322,8 +366,8 @@
         </table>
       `;
 
-      const now = new Date().toLocaleTimeString();
-      chart.data.labels.push(now);
+      const timeLabel = new Date().toLocaleTimeString();
+      chart.data.labels.push(timeLabel);
       chart.data.datasets[0].data.push(totalValue);
       chart.update();
     }
