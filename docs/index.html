@@ -1,376 +1,40 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Stock Tracker</title>
+
+  <!-- 폰트 & 공통 CSS -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/pretendard@1.3.6/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Chart.js & 퍼센트 라벨 플러그인 -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    :root {
-      --primary: #3182f6;
-      --danger: #ff3b30;
-      --profit: #007aff;
-      --bg: #f9fafb;
-      --text: #1c1c1e;
-      --gray: #a1a1aa;
-    }
-
-    body {
-      margin: 0;
-      font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      padding: 2rem;
-    }
-
-    h2 {
-      margin-bottom: 1rem;
-      font-size: 1.8rem;
-      color: var(--primary);
-    }
-
-    #proStatus {
-      font-size: 0.9rem;
-      margin-bottom: 1rem;
-      font-weight: 600;
-      color: #10b981;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-
-    th, td {
-      padding: 1rem;
-      text-align: center;
-      border-bottom: 1px solid #eee;
-    }
-
-    th {
-      background: #f0f4f8;
-      color: #374151;
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-
-    td {
-      font-size: 0.9rem;
-    }
-
-    .price-up {
-      color: var(--danger);
-      font-weight: 600;
-    }
-
-    .price-down {
-      color: var(--profit);
-      font-weight: 600;
-    }
-
-    .profit-up { color: var(--danger); font-weight: 600; }
-    .profit-down { color: var(--profit); font-weight: 600; }
-
-    .total-row {
-      background: #f9fbfc;
-      font-weight: 700;
-    }
-
-    .input-row input {
-      width: 100%;
-      padding: 0.6rem;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      text-align: center;
-    }
-
-    .btn {
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 0.6rem 1.2rem;
-      margin-top: 1rem;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-
-    .btn + .btn {
-      margin-left: 0.5rem;
-    }
-
-    canvas {
-      margin-top: 2rem;
-      background: white;
-      border-radius: 12px;
-      padding: 1rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 </head>
 <body>
+
   <h2>📈 Stock Tracker</h2>
 
-  <label for="password">🔐 Pro 모드 비밀번호:</label>
-  <input type="password" id="password" placeholder="비밀번호 입력" style="margin-bottom: 0.5rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
-  <div id="proStatus"></div>
+  <label for="pw">🔐 Pro 모드 비밀번호</label>
+  <input type="password" id="pw" placeholder="비밀번호 입력">
+  <span id="proStatus"></span>
 
   <table id="inputTable">
     <thead>
-      <tr>
-        <th>종목 코드</th>
-        <th>보유 수량</th>
-        <th>평균 단가</th>
-        <th>삭제</th>
-      </tr>
+      <tr><th>종목 코드</th><th>보유 수량</th><th>평균 단가</th><th>삭제</th></tr>
     </thead>
-    <tbody>
-      <tr class="input-row">
-        <td><input type="text" value="018290"></td>
-        <td><input type="number" value="1"></td>
-        <td><input type="number" value="35580"></td>
-        <td><button onclick="removeRow(this)">❌</button></td>
-      </tr>
-      <tr class="input-row">
-        <td><input type="text" value="087010"></td>
-        <td><input type="number" value="1"></td>
-        <td><input type="number" value="109550"></td>
-        <td><button onclick="removeRow(this)">❌</button></td>
-      </tr>
-      <tr class="input-row">
-        <td><input type="text" value="347850"></td>
-        <td><input type="number" value="1"></td>
-        <td><input type="number" value="59850"></td>
-        <td><button onclick="removeRow(this)">❌</button></td>
-      </tr>
-    </tbody>
+    <tbody></tbody>
   </table>
 
-  <div>
-    <button class="btn" onclick="addRow()">➕ 행 추가</button>
-    <button class="btn" onclick="startTracking()">📊 전체 조회</button>
-  </div>
+  <button class="btn" id="addBtn">➕ 행 추가</button>
+  <button class="btn" id="runBtn">📊 전체 조회</button>
 
   <div id="output"></div>
-  <canvas id="stockChart" height="100"></canvas>
+  <canvas id="lineChart" height="100"></canvas>
+  <canvas id="pieChart"  height="100"></canvas>
 
-  <script>
-    const WORKER_URL = "https://jolly-hall-61f4.313nara.workers.dev/";
-    const ctx = document.getElementById("stockChart").getContext("2d");
-
-    const chart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: [],
-        datasets: [{
-          label: "총 평가금액",
-          borderColor: "#3182f6",
-          backgroundColor: "rgba(49,130,246,0.1)",
-          fill: true,
-          data: []
-        }]
-      },
-      options: {
-        responsive: true,
-        animation: false,
-        scales: {
-          x: { display: true },
-          y: { display: true }
-        }
-      }
-    });
-
-    let trackingStarted = false;
-    let trackTimer = null;
-    let stopTimer = null;
-
-    function addRow() {
-      const tbody = document.querySelector("#inputTable tbody");
-      const row = document.createElement("tr");
-      row.className = "input-row";
-      row.innerHTML = `
-        <td><input type="text"></td>
-        <td><input type="number"></td>
-        <td><input type="number"></td>
-        <td><button onclick="removeRow(this)">❌</button></td>
-      `;
-      tbody.appendChild(row);
-    }
-
-    function removeRow(button) {
-      button.closest("tr").remove();
-    }
-
-    async function verifyPassword(password) {
-      try {
-        const res = await fetch(WORKER_URL + "check-password", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password })
-        });
-        const result = await res.json();
-        return result.ok === true;
-      } catch {
-        return false;
-      }
-    }
-
-    async function startTracking() {
-      if (trackingStarted) return;
-      trackingStarted = true;
-
-      const password = document.getElementById("password").value;
-      const proStatus = document.getElementById("proStatus");
-      const isPro = await verifyPassword(password);
-      if (isPro) {
-        localStorage.setItem("pro", "true");
-        proStatus.textContent = "✅ Pro 모드로 진입했습니다 (10초 업데이트)";
-      } else {
-        proStatus.textContent = "⏳ 일반 모드로 실행 중입니다 (1분 업데이트) | 5분 후 자동종료 됩니다";
-      }
-
-      const interval = isPro ? 10000 : 60000;
-
-      await trackStocks();
-      trackTimer = setInterval(trackStocks, interval);
-      if (!isPro) {
-        stopTimer = setTimeout(() => {
-          clearInterval(trackTimer);
-          alert("⏱️ 자동 업데이트가 종료되었습니다 (5분 경과)");
-          trackingStarted = false;
-          proStatus.textContent = "";
-        }, 5 * 60 * 1000);
-      }
-    }
-
-    async function trackStocks() {
-      
-      const now = new Date();
-      const hour = now.getHours();
-      const minute = now.getMinutes();
-      const currentTime = hour * 60 + minute;
-
-      const marketStart = 9 * 60;        // 오전 9시
-      const marketEnd = 15 * 60 + 30;    // 오후 3시 30분
-
-      if (currentTime < marketStart) {
-        clearInterval(trackTimer);
-        clearTimeout(stopTimer);
-        trackingStarted = false;
-        alert("📉 정규 시장 시간 전입니다. (오전 9시 이후부터 조회 가능)");
-        return;
-      }
-
-      if (currentTime > marketEnd) {
-        clearInterval(trackTimer);
-        clearTimeout(stopTimer);
-        trackingStarted = false;
-
-        // ✨ 수익 계산
-        const rows = document.querySelectorAll("#inputTable tbody tr");
-        let totalValue = 0;
-        let totalCost = 0;
-
-        for (const row of rows) {
-          const qty = parseInt(row.cells[1].querySelector("input").value);
-          const avg = parseInt(row.cells[2].querySelector("input").value);
-          const value = parseFloat(row.cells[5]?.textContent.replace(/,/g, '') || 0);
-          if (!isNaN(qty) && !isNaN(avg)) {
-            totalCost += avg * qty;
-          }
-          totalValue += isNaN(value) ? 0 : value;
-        }
-
-        const profit = totalValue - totalCost;
-        const sign = profit > 0 ? "+" : "";
-        alert(`📈 정규 시장이 종료되었습니다.\n오늘 총 수익 금액은 ${sign}${profit.toLocaleString()}원입니다.`);
-        return;
-      }
-
-
-      const rows = document.querySelectorAll("#inputTable tbody tr");
-      let results = [];
-      let totalValue = 0;
-      let totalQty = 0;
-      let totalCost = 0;
-      let totalChange = 0;
-
-      for (const row of rows) {
-        const code = row.cells[0].querySelector("input").value.trim();
-        const qty = parseInt(row.cells[1].querySelector("input").value);
-        const avg = parseInt(row.cells[2].querySelector("input").value);
-        if (!code || !qty || !avg) continue;
-
-        try {
-          const res = await fetch(WORKER_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code })
-          });
-
-          const data = await res.json();
-          const name = code;
-          const price = data.price;
-          const change = typeof data.change === "number" ? data.change : 0;
-          const rate = typeof data.rate === "number" ? data.rate : 0;
-
-          const value = price * qty;
-          const profit = ((price - avg) / avg * 100).toFixed(2);
-
-          totalQty += qty;
-          totalValue += value;
-          totalCost += avg * qty;
-          totalChange += change * qty;
-
-          const priceClass = change > 0 ? 'price-up' : change < 0 ? 'price-down' : '';
-          const profitClass = profit > 0 ? 'profit-up' : profit < 0 ? 'profit-down' : '';
-          const changeSymbol = change > 0 ? '▲' : change < 0 ? '▼' : '-';
-
-          results.push(`
-            <tr>
-              <td>${name}</td>
-              <td class="${priceClass}">${price.toLocaleString()} (${changeSymbol}${Math.abs(change).toLocaleString()})</td>
-              <td>${qty}</td>
-              <td>${avg.toLocaleString()}</td>
-              <td class="${profitClass}">${profit}%</td>
-              <td>${value.toLocaleString()}</td>
-            </tr>
-          `);
-        } catch (err) {
-          results.push(`<tr><td colspan="6">${code} - 오류 발생 (${err.message})</td></tr>`);
-        }
-      }
-
-      const totalRate = ((totalValue - totalCost) / totalCost * 100).toFixed(2);
-      const totalChangeSign = totalChange > 0 ? '▲' : totalChange < 0 ? '▼' : '-';
-      const totalRateSign = totalRate > 0 ? '+' : '';
-      const totalColor = totalChange > 0 ? 'var(--danger)' : totalChange < 0 ? 'var(--profit)' : 'black';
-
-      document.getElementById("output").innerHTML = `
-        <h3>📋 결과</h3>
-        <table>
-          <tr><th>종목코드</th><th>현재가</th><th>수량</th><th>평균 단가</th><th>수익률</th><th>평가금액</th></tr>
-          ${results.join("")}
-          <tr class="total-row">
-            <td>전체</td>
-            <td style="color:${totalColor}">${totalChangeSign}${Math.abs(totalChange).toLocaleString()}</td>
-            <td>${totalQty}</td>
-            <td>-</td>
-            <td style="color:${totalColor}">${totalRateSign}${Math.abs(totalRate)}%</td>
-            <td>${totalValue.toLocaleString()}</td>
-          </tr>
-        </table>
-      `;
-
-      const timeLabel = new Date().toLocaleTimeString();
-      chart.data.labels.push(timeLabel);
-      chart.data.datasets[0].data.push(totalValue);
-      chart.update();
-    }
-  </script>
+  <script src="js/main.js" defer></script>
 </body>
 </html>
