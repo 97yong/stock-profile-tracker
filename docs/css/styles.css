@@ -31,6 +31,6 @@
   
   /* 도넛 차트 크기 제한 */
   #pieChart{
-    max-width:240px;max-height:240px;margin:2rem auto;
+    max-width:300px;max-height:300px;margin:2rem auto;
   }
   

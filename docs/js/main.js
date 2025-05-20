@@ -57,9 +57,10 @@ function updatePie(data){
 }
 
 /* ------------------ 행 추가/삭제 ------------------ */
-function addRow(c="",q="",a=""){
+function addRow(n="",c="",q="",a=""){
   const tr=document.createElement("tr");
   tr.innerHTML=`
+    <td><input type="text"   value="${n}"></td>
     <td><input type="text"   value="${c}"></td>
     <td><input type="number" value="${q}"></td>
     <td><input type="number" value="${a}"></td>
@@ -76,7 +77,7 @@ window.addEventListener("DOMContentLoaded",async()=>{
   try{
     const res = await fetch("data/default_stocks.json");
     const list= await res.json();
-    list.forEach(s=>addRow(s.code,s.qty,s.avg));
+    list.forEach(s=>addRow(s.name,s.code,s.qty,s.avg));
   }catch(e){console.error("기본 종목 로드 실패",e);}
 });
 
@@ -119,25 +120,25 @@ async function track(){
   if(cur>MARKET_END){stop("📈 장 마감!");return;}
 
   const rows=[...tbody.querySelectorAll("tr")].map(tr=>{
-    const [c,q,a]=tr.querySelectorAll("input");
-    return {code:c.value.trim(),qty:+q.value,avg:+a.value};
-  }).filter(r=>r.code&&r.qty&&r.avg);
+    const [n,c,q,a]=tr.querySelectorAll("input");
+    return {name:n.value.trim(),code:c.value.trim(),qty:+q.value,avg:+a.value};
+  }).filter(r=>r.name&&r.code&&r.qty&&r.avg);
 
   let html="",totVal=0,totCost=0,totQty=0,totChg=0,pieData=[];
-  for(const {code,qty,avg} of rows){
+  for(const {name,code,qty,avg} of rows){
     try{
       const {price,change=0}=await fetchQuote(code);
       const val=price*qty;                         // ★ 평가금액
       const prof=((price-avg)/avg*100).toFixed(2);
 
       totQty+=qty;totVal+=val;totCost+=avg*qty;totChg+=change*qty;
-      pieData.push({label:code,value:val});       // ★ pieData에 저장
+      pieData.push({label:name,value:val});       // ★ pieData에 저장
 
       const pc=change>0?"price-up":change<0?"price-down":"";
       const rc=prof>0?"profit-up":prof<0?"profit-down":"";
       const sym=change>0?"▲":change<0?"▼":"-";
       html+=`<tr>
-        <td>${code}</td>
+        <td>${name}</td>
         <td class="${pc}">${price.toLocaleString()} (${sym}${Math.abs(change).toLocaleString()})</td>
         <td>${qty}</td><td>${avg.toLocaleString()}</td>
         <td class="${rc}">${prof}%</td><td>${val.toLocaleString()}</td></tr>`;
@@ -151,7 +152,7 @@ async function track(){
   output.innerHTML=`
     <h3>📋 결과 (${now.toLocaleTimeString()})</h3>
     <table>
-      <tr><th>종목</th><th>현재가</th><th>수량</th><th>평균 단가</th><th>수익률</th><th>평가금액</th></tr>
+      <tr><th>종목명</th><th>현재가</th><th>수량</th><th>평균 단가</th><th>수익률</th><th>평가금액</th></tr>
       ${html}
       <tr class="total-row">
         <td>전체</td>
