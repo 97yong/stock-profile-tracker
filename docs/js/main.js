@@ -1,7 +1,7 @@
 /* ------------------ 설정 ------------------ */
 const WORKER_URL   = "https://jolly-hall-61f4.313nara.workers.dev/";
 const MARKET_START = 9 * 60;          // 09:00
-const MARKET_END   = 15 * 60 + 30;    // 15:30
+const MARKET_END   = 19 * 60 + 30;    // 15:30
 
 /* ------------------ DOM ------------------ */
 const tbody     = document.querySelector("#inputTable tbody");
