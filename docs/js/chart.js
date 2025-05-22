@@ -32,11 +32,13 @@ export const ChartManager = {
             borderWidth: 2,
             fill: true,
             tension: 0.4,
-            pointRadius: 0,
-            pointHoverRadius: 4,
-            pointHoverBackgroundColor: "#3182f6",
-            pointHoverBorderColor: "#fff",
-            pointHoverBorderWidth: 2
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#3182f6',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointStyle: 'circle',
+            showLine: true
           },
           {
             label: "전일 평가금액",
@@ -48,10 +50,7 @@ export const ChartManager = {
             fill: true,
             tension: 0.4,
             pointRadius: 0,
-            pointHoverRadius: 4,
-            pointHoverBackgroundColor: "#6b7684",
-            pointHoverBorderColor: "#fff",
-            pointHoverBorderWidth: 2
+            showLine: true
           }
         ]
       },
@@ -101,7 +100,14 @@ export const ChartManager = {
             },
             callbacks: {
               label: function(context) {
-                return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + '원';
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.parsed.y !== null) {
+                  label += new Intl.NumberFormat('ko-KR').format(context.parsed.y) + '원';
+                }
+                return label;
               }
             }
           }
@@ -113,13 +119,11 @@ export const ChartManager = {
             },
             ticks: {
               maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 8,
               font: {
-                size: 14,
-                family: 'Pretendard',
-                weight: '500'
-              },
-              padding: 8,
-              color: '#6b7684'
+                size: 12
+              }
             }
           },
           y: {
@@ -128,15 +132,14 @@ export const ChartManager = {
               color: '#f1f4f6'
             },
             ticks: {
-              font: {
-                size: 14,
-                family: 'Pretendard',
-                weight: '500'
-              },
-              padding: 8,
-              color: '#6b7684',
               callback: function(value) {
-                return value.toLocaleString() + '원';
+                return new Intl.NumberFormat('ko-KR', {
+                  notation: 'compact',
+                  maximumFractionDigits: 1
+                }).format(value);
+              },
+              font: {
+                size: 12
               }
             }
           }

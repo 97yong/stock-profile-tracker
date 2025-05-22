@@ -39,6 +39,10 @@ export const TrackerManager = {
     this.timer = null;
     clearTimeout(this.stopper);
     this.hideLoading();
+    // 스피너 비활성화
+    const spinner = document.querySelector('.mini-spinner');
+    if (spinner) spinner.classList.remove('active');
+    
     if (msg) {
       const output = document.getElementById("output");
       const now = new Date();
@@ -54,17 +58,12 @@ export const TrackerManager = {
   },
 
   async track() {
+    const output = document.getElementById("output");
+    
     // Show loading state only for initial load
     if (this.isInitialLoad) {
       this.showLoading();
-      this.isInitialLoad = false;
-    }
-
-    const output = document.getElementById("output");
-    output.style.display = "block";
-    
-    // 초기 로딩이 아닐 때는 이전 HTML을 유지
-    if (this.isInitialLoad) {
+      output.style.display = "block";
       output.innerHTML = `
         <div class="result-card">
           <h3>실시간 포트폴리오</h3>
@@ -74,6 +73,8 @@ export const TrackerManager = {
           </div>
         </div>
       `;
+      this.isInitialLoad = false;
+      return; // 초기 로딩 후 바로 리턴
     }
 
     const now = new Date();
@@ -97,6 +98,12 @@ export const TrackerManager = {
       const canvas = document.getElementById(`chart-${code}`);
       if (canvas) existingCanvases[code] = canvas;
     });
+
+    // 데이터 업데이트 시작 전에 스피너 표시
+    const titleElement = output.querySelector('h3');
+    if (titleElement) {
+      titleElement.innerHTML = `실시간 포트폴리오<div class="mini-spinner active"></div><span class="time">${now.toLocaleTimeString()}</span>`;
+    }
 
     let html = "";
     for(const {name, code, qty, avg} of rows) {
@@ -170,6 +177,7 @@ export const TrackerManager = {
     const arrow = totChg > 0 ? "▲" : totChg < 0 ? "▼" : "-";
     const col = totChg > 0 ? "var(--danger)" : totChg < 0 ? "var(--profit)" : "black";
 
+    // 데이터 로드가 완료되면 결과 표시
     output.innerHTML = `
       <div class="result-card">
         <h3>실시간 포트폴리오<span class="time">${now.toLocaleTimeString()}</span></h3>
