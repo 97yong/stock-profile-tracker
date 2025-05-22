@@ -26,7 +26,7 @@ function drawCandleChart(canvas, data) {
   // 캔들 그리기
   const isUp = change > 0;
   const candleColor = isUp ? '#ff3b30' : change < 0 ? '#007aff' : '#000';
-  const x = Math.floor(w * 0.7);  // 오른쪽으로 이동
+  const x = Math.floor(w / 2);  // 오른쪽으로 이동
 
   ctx.strokeStyle = candleColor;
   ctx.fillStyle = candleColor;
