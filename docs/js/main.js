@@ -80,7 +80,8 @@ window.addEventListener('DOMContentLoaded', () => {
       fill: true, data: []
     }]},
     options: {
-      responsive: false,
+      responsive: true,
+      maintainAspectRatio: false,
       animation: false
     }
   });
