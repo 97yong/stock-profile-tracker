@@ -25,7 +25,18 @@
     margin-left: 1rem;
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+    padding-right: 1rem;
+  }
+
+  .pro-row input[type="password"] {
+    width: 120px;
+  }
+
+  .pro-row .btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
   }
 
   .btn-wrap {
@@ -354,12 +365,14 @@
     box-sizing: border-box;
   }
   
-  .chart-card h3{
-    margin:0 0 .5rem 0;
-    font-size:1.2rem;
-    font-weight:700;
-    text-align:center;
-    color:var(--primary);
+  .chart-card h3 {
+    margin: 0 0 0.8rem 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--primary);
+    letter-spacing: -0.01em;
+    line-height: 1.4;
   }
 
   /* ───────── Seed Calculator ───────── */
@@ -391,3 +404,27 @@
     text-align:center;
   }
   #seedTable tbody tr:last-child td{border-bottom:none;}
+
+  .result-card h3 {
+    margin: 1.5rem 0 1rem 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+    position: relative;
+    text-align: center;
+    padding: 0 1rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .result-card h3 .time {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.85rem;
+    color: #6b7684;
+    font-weight: 500;
+  }
