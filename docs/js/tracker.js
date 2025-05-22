@@ -36,7 +36,18 @@ export const TrackerManager = {
     clearInterval(this.timer);
     this.timer = null;
     clearTimeout(this.stopper);
-    alert(msg);
+    this.hideLoading();
+    if (msg) {
+      const output = document.getElementById("output");
+      const now = new Date();
+      output.innerHTML = `
+        <div class="result-card">
+          <h3>실시간 포트폴리오 <span class="time">${now.toLocaleTimeString()}</span></h3>
+          <div class="loading-text" style="margin:2rem 0 1.5rem 0; color:#6b7684; font-size:1.05rem;">${msg}</div>
+          ${lastPortfolioHTML ? lastPortfolioHTML : ''}
+        </div>
+      `;
+    }
     document.getElementById("proStatus").textContent = "";
   },
 
@@ -49,11 +60,11 @@ export const TrackerManager = {
     const cur = now.getHours() * 60 + now.getMinutes();
     
     if (cur < CONFIG.MARKET_START) {
-      alert("📉 9시 이전입니다.");
+      this.stop("📉 9시 이전입니다.");
       return;
     }
     if (cur > CONFIG.MARKET_END) {
-      this.stop("📈 장 마감!");
+      this.stop("📈 장 마감! 현재 장이 마감되어 데이터가 갱신되지 않습니다.");
       return;
     }
 
@@ -141,22 +152,24 @@ export const TrackerManager = {
 
     const output = document.getElementById("output");
     output.innerHTML = `
-      <h3>결과 (${now.toLocaleTimeString()})</h3>
-      <table>
-        <tr><th>종목명</th><th>현재가</th><th>등락률</th><th>차트</th><th>수량</th><th>평균 단가</th><th>수익률</th><th>평가금액</th></tr>
-        ${html}
-        <tr class="total-row">
-          <td>전체</td>
-          <td>
-            <div class="change-rate" style="color:${col}">${arrow}${Math.abs(totChg).toLocaleString()}</div>
-          </td>
-          <td>-</td>
-          <td></td>
-          <td>${totQty}</td><td>-</td>
-          <td style="color:${totRate>0?'var(--danger)':totRate<0?'var(--profit)':'black'}">${sign}${Math.abs(totRate)}%</td>
-          <td>${totVal.toLocaleString()}</td>
-        </tr>
-      </table>`;
+      <div class="result-card">
+        <h3>실시간 포트폴리오<span class="time">${now.toLocaleTimeString()}</span></h3>
+        <table>
+          <tr><th>종목명</th><th>현재가</th><th>등락률</th><th>차트</th><th>수량</th><th>평균 단가</th><th>수익률</th><th>평가금액</th></tr>
+          ${html}
+          <tr class="total-row">
+            <td>전체</td>
+            <td>
+              <div class="change-rate" style="color:${col}">${arrow}${Math.abs(totChg).toLocaleString()}</div>
+            </td>
+            <td>-</td>
+            <td></td>
+            <td>${totQty}</td><td>-</td>
+            <td style="color:${totRate>0?'var(--danger)':totRate<0?'var(--profit)':'black'}">${sign}${Math.abs(totRate)}%</td>
+            <td>${totVal.toLocaleString()}</td>
+          </tr>
+        </table>
+      </div>`;
 
     // 캔들차트 다시 그리기
     rows.forEach(({code}) => {
@@ -215,5 +228,111 @@ export const TrackerManager = {
     document.getElementById("lineChart").style.display = "block";
     document.getElementById("pieChart").style.display = "block";
     document.getElementById("seedTable").style.display = "table";
+  },
+
+  updateOutput() {
+    const now = new Date();
+    const output = document.getElementById("output");
+    
+    if (!isMarketOpen()) {
+      this.hideLoading();
+      output.innerHTML = `
+        <div class="result-card">
+          <h3>실시간 포트폴리오 <span class="time">${now.toLocaleTimeString()}</span></h3>
+          <div class="loading-text" style="margin:2rem 0 1.5rem 0; color:#6b7684; font-size:1.05rem;">현재 장이 마감되어 데이터가 갱신되지 않습니다.</div>
+          ${lastPortfolioHTML ? lastPortfolioHTML : ''}
+        </div>
+      `;
+      return;
+    }
+
+    // 먼저 제목과 로딩 상태만 표시
+    const html = `
+      <div class="result-card">
+        <h3>실시간 포트폴리오<span class="time">${new Date().toLocaleTimeString()}</span></h3>
+        <div class="loading">
+          <div class="spinner"></div>
+          <div class="loading-text">데이터를 불러오는 중입니다...</div>
+        </div>
+      </div>
+    `;
+
+    // 데이터 처리
+    const rows = TableManager.getRows();
+    let totalValue = 0;
+    let totalProfit = 0;
+    
+    for(const {name, code, qty, avg} of rows) {
+      try {
+        const data = ApiManager.getLastQuote(code);
+        if (!data) throw new Error('데이터를 가져올 수 없습니다');
+        
+        const {price, changeRate} = data;
+        const val = price * qty;
+        const prof = ((price - avg) / avg * 100).toFixed(2);
+        const rc = prof > 0 ? "profit-up" : prof < 0 ? "profit-down" : "";
+        const crc = changeRate > 0 ? "price-up" : changeRate < 0 ? "price-down" : "";
+        
+        totalValue += val;
+        totalProfit += (price - avg) * qty;
+        
+        html += `<tr>
+          <td>${name}</td>
+          <td class="${crc}">${price.toLocaleString()}<div class="change-rate">${changeRate > 0 ? '+' : ''}${changeRate}%</div></td>
+          <td class="mini-chart-cell"><div class="mini-chart" id="miniChart_${code}"></div></td>
+          <td>${qty.toLocaleString()}</td>
+          <td>${avg.toLocaleString()}</td>
+          <td class="${rc}">${prof}%</td>
+          <td>${val.toLocaleString()}</td>
+        </tr>`;
+      } catch(err) {
+        html += `<tr><td colspan="7">${code} - 오류: ${err.message}</td></tr>`;
+      }
+    }
+    
+    const totalProfitRate = ((totalProfit / (totalValue - totalProfit)) * 100).toFixed(2);
+    const trc = totalProfitRate > 0 ? "profit-up" : totalProfitRate < 0 ? "profit-down" : "";
+    
+    html += `<tr class="total-row">
+      <td>합계</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td class="${trc}">${totalProfitRate}%</td>
+      <td>${totalValue.toLocaleString()}</td>
+    </tr>`;
+    
+    // 데이터가 준비되면 테이블 표시
+    lastPortfolioHTML = `<table>
+      <tr><th>종목명</th><th>현재가</th><th>차트</th><th>수량</th><th>평균 단가</th><th>수익률</th><th>평가금액</th></tr>
+      ${html}
+    </table>`;
+    output.innerHTML = `
+      <div class="result-card">
+        <h3>실시간 포트폴리오 <span class="time">${now.toLocaleTimeString()}</span></h3>
+        ${lastPortfolioHTML}
+      </div>
+    `;
+    
+    // 미니 차트 업데이트
+    for(const {code} of rows) {
+      const data = ApiManager.getLastQuote(code);
+      if (data) {
+        ChartManager.updateMiniChart(code, data.prices);
+      }
+    }
   }
-}; 
+};
+
+// 장 운영 시간 확인 함수
+function isMarketOpen() {
+  const now = new Date();
+  const open = new Date(now);
+  open.setHours(9, 0, 0, 0);
+  const close = new Date(now);
+  close.setHours(20, 30, 0, 0);
+  return now >= open && now <= close;
+}
+
+let lastPortfolioHTML = ''; 
