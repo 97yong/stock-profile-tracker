@@ -10,6 +10,7 @@ const output    = document.getElementById("output");
 
 // 캔들차트 데이터 저장소
 const candleData = {};
+let prevTotal = 0;
 
 /* ------------------ 차트 ------------------ */
 // 캔들차트 그리기 함수
@@ -19,7 +20,7 @@ function drawCandleChart(canvas, data) {
 
   const ctx = canvas.getContext('2d');
   const w = canvas.width, h = canvas.height;
-
+-
   // 배경 지우기
   ctx.clearRect(0, 0, w, h);
 
@@ -56,7 +57,8 @@ function drawCandleChart(canvas, data) {
   const bodyY = Math.min(priceY, openY);
   const bodyHeight = Math.max(Math.abs(priceY - openY), 1);
 
-  ctx.fillRect(x-2, bodyY, 4, bodyHeight);
+  const bodyWidth = 8;
+  ctx.fillRect(x - bodyWidth / 2, bodyY, bodyWidth, bodyHeight);
 }
 
 // 동적으로 canvas 해상도 설정 (카드 폭 × dpr)
@@ -78,7 +80,17 @@ window.addEventListener('DOMContentLoaded', () => {
       borderColor: "#3182f6",
       backgroundColor: "rgba(49,130,246,.1)",
       fill: true, data: []
-    }]},
+    },
+      {
+        label: "전일 평가금액",
+        borderColor: "#aaa",
+        borderDash: [5, 5], // 점선
+        borderWidth: 1,
+        pointRadius: 0,
+        fill: false,
+        data: []
+      }
+  ]},
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -174,8 +186,8 @@ document.getElementById("runBtn").onclick = async ()=>{
   const isPro = await verifyPassword(pw);
   const period= isPro ? 10_000 : 60_000;
   proStatus.textContent = isPro
-    ? "🚀 Pro (10초 갱신)"
-    : "⏳ 일반 (1분 갱신, 5분 종료)";
+    ? "🚀 Pro 모드 진입 (10초 갱신)"
+    : "⏳ 일반 모드 실행 (1분 갱신, 5분 종료)";
 
   await track();
   timer=setInterval(track,period);
@@ -197,7 +209,7 @@ async function track(){
   }).filter(r=>r.name&&r.code&&r.qty&&r.avg);
 
   let totVal=0,totCost=0,totQty=0,totChg=0,pieData=[];
-  
+
   // 기존 캔버스 참조 저장
   const existingCanvases = {};
   rows.forEach(({code}) => {
@@ -209,12 +221,13 @@ async function track(){
   for(const {name,code,qty,avg} of rows){
     try{
       const data = await fetchQuote(code);
-      const {price, change, rate, open, high, low, volume, direction} = data;
+      const {price, change, rate, open, high, low, volume, prevClose} = data;
       
       // 캔들차트 데이터 업데이트
       if (!candleData[code]) {
         // 첫 데이터는 모두 저장
-        candleData[code] = {open, high, low, lastPrice: price};
+        candleData[code] = {open, high, low, lastPrice: price, prevClose};
+
       } else {
         // 이후에는 고가/저가만 업데이트
         candleData[code].high = Math.max(candleData[code].high, price);
@@ -260,6 +273,15 @@ async function track(){
     }catch(err){html+=`<tr><td colspan="8">${code} - 오류: ${err.message}</td></tr>`;}
   }
 
+  if (prevTotal === 0) {
+    for (const { code, qty } of rows) {
+      const candle = candleData[code];
+      if (candle && candle.prevClose) {
+        prevTotal += candle.prevClose * qty;
+      }
+    }
+  }
+
   const totRate=((totVal-totCost)/totCost*100).toFixed(2);
   const sign=totRate>0?"+":"",arrow=totChg>0?"▲":totChg<0?"▼":"-";
   const col=totChg>0?"var(--danger)":totChg<0?"var(--profit)":"black";
@@ -299,6 +321,7 @@ async function track(){
 
   window.lineChart.data.labels.push(now.toLocaleTimeString());
   window.lineChart.data.datasets[0].data.push(totVal);
+  window.lineChart.data.datasets[1].data.push(prevTotal);  // 기준선
   window.lineChart.update();
 
   updatePie(pieData);                 // ★ 평가금액 기반 도넛 갱신
