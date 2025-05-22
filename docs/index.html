@@ -15,25 +15,35 @@
 </head>
 <body>
 
-  <h2>📈 Stock Tracker</h2>
+  <div class="card">
+    <h2>Stock Tracker</h2>
 
-  <label for="pw">🔐 Pro 모드 비밀번호</label>
-  <input type="password" id="pw" placeholder="비밀번호 입력">
-  <span id="proStatus"></span>
+    <label for="pw">🚀 Pro 모드</label>
+    <input type="password" id="pw" placeholder="비밀번호">
+    <span id="proStatus"></span>
 
-  <table id="inputTable">
-    <thead>
-      <tr><th>종목명</th><th>종목 코드</th><th>보유 수량</th><th>평균 단가</th><th>삭제</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <table id="inputTable">
+      <thead>
+        <tr><th>종목명</th><th>종목 코드</th><th>보유 수량</th><th>평균 단가</th><th>삭제</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-  <button class="btn" id="addBtn">➕ 행 추가</button>
-  <button class="btn" id="runBtn">📊 전체 조회</button>
+    <div class="btn-wrap">
+      <button class="btn btn-main" id="addBtn">행 추가</button>
+      <button class="btn btn-main" id="runBtn">조회 시작</button>
+    </div>
+  </div>
 
-  <div id="output"></div>
-  <canvas id="lineChart" height="100"></canvas>
-  <canvas id="pieChart"  height="100"></canvas>
+  <div class="result-card">
+    <div id="output"></div>
+  </div>
+  <div class="chart-card">
+    <canvas id="lineChart" height="260" width="900"></canvas>
+  </div>
+  <div class="chart-card">
+    <canvas id="pieChart"  height="100"></canvas>
+  </div>
 
   <script src="js/main.js" defer></script>
 </body>
