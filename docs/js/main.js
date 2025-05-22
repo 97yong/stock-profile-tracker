@@ -1,7 +1,7 @@
 /* ------------------ 설정 ------------------ */
 const WORKER_URL   = "https://jolly-hall-61f4.313nara.workers.dev/";
 const MARKET_START = 9 * 60;          // 09:00
-const MARKET_END   = 19 * 60 + 30;    // 15:30
+const MARKET_END   = 20 * 60 + 30;    // 20:30
 
 /* ------------------ DOM ------------------ */
 const tbody     = document.querySelector("#inputTable tbody");
@@ -94,7 +94,8 @@ window.addEventListener('DOMContentLoaded', () => {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: false
+      animation: true,
+      
     }
   });
   canvas.style.background = "#fff";
@@ -199,6 +200,16 @@ function stop(msg){clearInterval(timer);timer=null;clearTimeout(stopper);
   alert(msg);proStatus.textContent="";}
 
 async function track(){
+
+  document.getElementById("lineLoading").style.display = "flex";
+  document.getElementById("lineChart").style.display = "none";
+
+  document.getElementById("pieLoading").style.display = "flex";
+  document.getElementById("pieChart").style.display = "none";
+
+  document.getElementById("seedCalcLoading").style.display = "flex";
+  document.getElementById("seedTable").style.display = "none";
+
   const now=new Date(), cur=now.getHours()*60+now.getMinutes();
   if(cur<MARKET_START){alert("📉 9시 이전입니다.");return;}
   if(cur>MARKET_END){stop("📈 장 마감!");return;}
@@ -325,6 +336,16 @@ async function track(){
   window.lineChart.update();
 
   updatePie(pieData);                 // ★ 평가금액 기반 도넛 갱신
+
+  document.getElementById("lineLoading").style.display = "none";
+  document.getElementById("lineChart").style.display = "block";
+
+  document.getElementById("pieLoading").style.display = "none";
+  document.getElementById("pieChart").style.display = "block";
+
+  document.getElementById("seedCalcLoading").style.display = "none";
+  document.getElementById("seedTable").style.display = "table";
+
 }
 
 async function fetchQuote(code){
@@ -338,3 +359,83 @@ async function fetchQuote(code){
   if (!data.price) throw new Error('가격 정보를 가져올 수 없습니다');
   return data;                    // {price, change, rate, open, high, low, volume}
 }
+
+
+function seedCalcHandler(){
+  const seedInput = document.getElementById("seedAmount");
+  const seed = parseInt((seedInput.value || "0").replace(/,/g, ""), 10);
+  if (!seed) {
+    alert("투자 금액을 입력하세요!");
+    seedInput.focus();
+    return;
+  }
+
+  const rows = Array.from(document.querySelectorAll("#inputTable tbody tr"));
+  if (!rows.length) {
+    alert("먼저 종목을 입력하세요!");
+    return;
+  }
+
+  const portfolio = [];
+  let totalVal = 0;
+
+  rows.forEach((tr) => {
+    const tds = tr.querySelectorAll("td");
+    const getVal = (cellIdx) => {
+      const el = tds[cellIdx].querySelector("input");
+      return (el ? el.value : tds[cellIdx].textContent).trim();
+    };
+    const name = getVal(0);
+    const qty = parseFloat(getVal(2).replace(/,/g, ""));
+    const avg = parseFloat(getVal(3).replace(/,/g, ""));
+    if (!isFinite(qty) || !isFinite(avg) || qty <= 0 || avg <= 0) return;
+    const val = qty * avg;
+    portfolio.push({ name, avg, val });
+    totalVal += val;
+  });
+
+  if (!portfolio.length || totalVal === 0) {
+    alert("수량 또는 평균단가가 올바르지 않습니다.");
+    return;
+  }
+
+  // ⬇️ 로딩 중 표시
+  const tbody = document.querySelector("#seedTable tbody");
+  tbody.innerHTML = `
+    <tr><td colspan="3">
+      <div class="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">계산중...</div>
+      </div>
+    </td></tr>
+  `;
+
+  setTimeout(() => {
+    tbody.innerHTML = "";
+    portfolio.forEach(({ name, avg, val }) => {
+      const weight = val / totalVal;
+      const buyQty = Math.floor((seed * weight) / avg);
+      const buyVal = buyQty * avg;
+      const ratio = (buyVal / seed) * 100;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${name}</td>
+        <td>${buyQty.toLocaleString()}</td>
+        <td>${buyVal.toLocaleString()}</td>
+        <td>${ratio.toFixed(1)}%</td>`;
+      tbody.appendChild(tr);
+    });
+  }, 300);
+}
+document.getElementById("seedCalcBtn").addEventListener("click", seedCalcHandler);
+
+const seedInput = document.getElementById("seedAmount");
+
+seedInput.addEventListener("input", () => {
+  const raw = seedInput.value.replace(/[^\d]/g, ""); // 숫자만 추출
+  if (raw === "") {
+    seedInput.value = "";
+    return;
+  }
+  seedInput.value = parseInt(raw, 10).toLocaleString();
+});

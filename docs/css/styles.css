@@ -336,4 +336,58 @@
     box-sizing: border-box;
   }
   
+  .chart-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    max-width: 1240px;
+    width: 100%;
+    margin: 0 auto;
+    gap: 0; /* 간격 없이 딱 붙게 */
+  }
+
+  .chart-card.small {
+    width: 580px;          /* 정확히 절반 */
+    flex: 0 0 auto;
+    padding: 1.2rem;
+    box-sizing: border-box;
+  }
   
+  .chart-card h3{
+    margin:0 0 .5rem 0;
+    font-size:1.2rem;
+    font-weight:700;
+    text-align:center;
+    color:var(--primary);
+  }
+
+  /* ───────── Seed Calculator ───────── */
+  .seed-card h3{
+    margin:0 0 .6rem 0;
+    font-size:1.2rem;
+    font-weight:700;
+    text-align:center;
+    color:var(--primary);
+  }
+  .seed-input{
+    display:flex;
+    gap:.4rem;
+    justify-content:center;
+    margin-bottom:.8rem;
+  }
+  .seed-input input{
+    width:60%;
+  }
+
+  #seedTable{
+    width:100%;
+    border-collapse:collapse;
+  }
+  #seedTable th,#seedTable td{
+    padding:.45rem .2rem;
+    border-bottom:1px solid #f1f4f6;
+    font-size:.85rem;
+    text-align:center;
+  }
+  #seedTable tbody tr:last-child td{border-bottom:none;}

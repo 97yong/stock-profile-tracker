@@ -40,13 +40,51 @@
   <div class="result-card">
     <div id="output"></div>
   </div>
+
   <div class="chart-card">
+    <h3>전일 대비 자산 추세</h3>
+      <div id="lineLoading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <div class="loading-text">로딩중...</div>
+      </div>
     <canvas id="lineChart" height="260" width="900"></canvas>
   </div>
-  <div class="chart-card">
-    <canvas id="pieChart"  height="100"></canvas>
+
+  <div class="chart-row">
+    <!-- 파이차트 카드 -->
+    <div class="chart-card small">
+    <h3>Portfolio</h3>
+      <div id="pieLoading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <div class="loading-text">로딩중...</div>
+      </div>
+      <canvas id="pieChart" height="100"></canvas>
+    </div>
+
+    <!-- 시드 계산기 카드 -->
+    <div class="chart-card small seed-card">
+      <h3>Seed Calculator</h3>
+      <div class="seed-input">
+        <input type="text" id="seedAmount" placeholder="투자금 (원)" inputmode="numeric">
+        <button class="btn btn-main" id="seedCalcBtn">계산</button>
+      </div>
+      <div id="seedCalcLoading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <div class="loading-text">로딩중...</div>
+      </div>
+      <table id="seedTable">
+        <thead>
+          <tr><th>종목명</th><th>매수 수량</th><th>투자액</th><th>비율</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    
   </div>
 
+
+
+  
   <script src="js/main.js" defer></script>
 </body>
 </html>
