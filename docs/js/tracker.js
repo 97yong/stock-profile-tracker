@@ -74,7 +74,6 @@ export const TrackerManager = {
         </div>
       `;
       this.isInitialLoad = false;
-      return; // 초기 로딩 후 바로 리턴
     }
 
     const now = new Date();
@@ -88,6 +87,9 @@ export const TrackerManager = {
       this.stop("📈 장 마감! 현재 장이 마감되어 데이터가 갱신되지 않습니다.");
       return;
     }
+
+    // 초기 로딩 상태 해제
+    this.hideLoading();
 
     const rows = TableManager.getRows();
     let totVal = 0, totCost = 0, totQty = 0, totChg = 0, pieData = [];
@@ -106,7 +108,7 @@ export const TrackerManager = {
     }
 
     let html = "";
-    for(const {name, code, qty, avg} of rows) {
+    const fetchPromises = rows.map(async ({name, code, qty, avg}) => {
       try {
         const data = await ApiManager.fetchQuote(code);
         const {price, change, rate, open, high, low, volume, prevClose} = data;
@@ -140,7 +142,7 @@ export const TrackerManager = {
         const pc = change > 0 ? "price-up" : change < 0 ? "price-down" : "";
         const rc = prof > 0 ? "profit-up" : prof < 0 ? "profit-down" : "";
         const sym = change > 0 ? "▲" : change < 0 ? "▼" : "-";
-        html += `<tr>
+        return `<tr>
           <td>${name}</td>
           <td class="price-cell">
             <div class="main-price ${pc}">${price.toLocaleString()}</div>
@@ -159,9 +161,13 @@ export const TrackerManager = {
           <td>${val.toLocaleString()}</td>
         </tr>`;
       } catch(err) {
-        html += `<tr><td colspan="8">${code} - 오류: ${err.message}</td></tr>`;
+        return `<tr><td colspan="8">${code} - 오류: ${err.message}</td></tr>`;
       }
-    }
+    });
+
+    // 모든 데이터를 병렬로 가져오기
+    const results = await Promise.all(fetchPromises);
+    html = results.join('');
 
     if (this.prevTotal === 0) {
       for (const { code, qty } of rows) {
@@ -176,6 +182,9 @@ export const TrackerManager = {
     const sign = totRate > 0 ? "+" : "";
     const arrow = totChg > 0 ? "▲" : totChg < 0 ? "▼" : "-";
     const col = totChg > 0 ? "var(--danger)" : totChg < 0 ? "var(--profit)" : "black";
+
+    // 파이 차트 데이터 정렬
+    pieData.sort((a, b) => b.value - a.value);
 
     // 데이터 로드가 완료되면 결과 표시
     output.innerHTML = `
@@ -219,9 +228,6 @@ export const TrackerManager = {
     ChartManager.lineChart.update();
 
     ChartManager.updatePie(pieData);
-
-    // Hide loading state and show all charts
-    this.hideLoading();
   },
 
   showLoading() {
