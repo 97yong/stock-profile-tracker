@@ -71,7 +71,7 @@ export const ChartManager = {
               boxWidth: 12,
               padding: 15,
               font: {
-                size: 13,
+                size: 15,
                 family: 'Pretendard',
                 weight: '600'
               },
@@ -90,12 +90,12 @@ export const ChartManager = {
             boxPadding: 6,
             usePointStyle: true,
             titleFont: {
-              size: 13,
+              size: 15,
               weight: '600',
               family: 'Pretendard'
             },
             bodyFont: {
-              size: 12,
+              size: 14,
               weight: '500',
               family: 'Pretendard'
             },
@@ -114,7 +114,7 @@ export const ChartManager = {
             ticks: {
               maxRotation: 0,
               font: {
-                size: 12,
+                size: 14,
                 family: 'Pretendard',
                 weight: '500'
               },
@@ -129,7 +129,7 @@ export const ChartManager = {
             },
             ticks: {
               font: {
-                size: 12,
+                size: 14,
                 family: 'Pretendard',
                 weight: '500'
               },
@@ -205,7 +205,7 @@ export const ChartManager = {
             labels: {
               padding: 20,
               font: {
-                size: 12,
+                size: 18,
                 family: 'Pretendard',
                 weight: '500'
               },
@@ -223,12 +223,12 @@ export const ChartManager = {
             padding: 12,
             boxPadding: 6,
             titleFont: {
-              size: 13,
+              size: 18,
               weight: '600',
               family: 'Pretendard'
             },
             bodyFont: {
-              size: 12,
+              size: 16,
               weight: '500',
               family: 'Pretendard'
             },
@@ -245,7 +245,7 @@ export const ChartManager = {
             color: "#1f2d37",
             font: { 
               weight: "600", 
-              size: 12,
+              size: 18,
               family: 'Pretendard'
             },
             formatter: (value, ctx) => {

@@ -14,7 +14,7 @@ export const TrackerManager = {
     if (this.timer) return;
 
     const output = document.getElementById("output");
-    output.innerHTML = '<div class="loading"><div class="spinner"></div><div class="loading-text">로딩중...</div></div>';
+    output.style.display = "none";
 
     const pw = document.getElementById("pw").value;
     const isPro = await ApiManager.verifyPassword(pw);
@@ -52,9 +52,20 @@ export const TrackerManager = {
   },
 
   async track() {
-    if (this.firstTrack) {
-      this.showLoading();
-    }
+    // Show loading state for all charts
+    this.showLoading();
+
+    const output = document.getElementById("output");
+    output.style.display = "block";
+    output.innerHTML = `
+      <div class="result-card">
+        <h3>실시간 포트폴리오</h3>
+        <div class="loading">
+          <div class="spinner"></div>
+          <div class="loading-text">데이터를 불러오는 중입니다...</div>
+        </div>
+      </div>
+    `;
 
     const now = new Date();
     const cur = now.getHours() * 60 + now.getMinutes();
@@ -150,7 +161,6 @@ export const TrackerManager = {
     const arrow = totChg > 0 ? "▲" : totChg < 0 ? "▼" : "-";
     const col = totChg > 0 ? "var(--danger)" : totChg < 0 ? "var(--profit)" : "black";
 
-    const output = document.getElementById("output");
     output.innerHTML = `
       <div class="result-card">
         <h3>실시간 포트폴리오<span class="time">${now.toLocaleTimeString()}</span></h3>
@@ -193,10 +203,8 @@ export const TrackerManager = {
 
     ChartManager.updatePie(pieData);
 
-    if (this.firstTrack) {
-      this.hideLoading();
-      this.firstTrack = false;
-    }
+    // Hide loading state and show all charts
+    this.hideLoading();
   },
 
   showLoading() {
@@ -212,7 +220,7 @@ export const TrackerManager = {
       card.style.display = "flex";
     });
 
-    // Ensure charts are hidden during loading
+    // Hide all content initially
     document.getElementById("lineChart").style.display = "none";
     document.getElementById("pieChart").style.display = "none";
     document.getElementById("seedTable").style.display = "none";
@@ -224,7 +232,7 @@ export const TrackerManager = {
     document.getElementById("pieLoading").style.display = "none";
     document.getElementById("seedCalcLoading").style.display = "none";
     
-    // Show charts and tables
+    // Show all content
     document.getElementById("lineChart").style.display = "block";
     document.getElementById("pieChart").style.display = "block";
     document.getElementById("seedTable").style.display = "table";
