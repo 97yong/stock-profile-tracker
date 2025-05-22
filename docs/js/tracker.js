@@ -9,6 +9,7 @@ export const TrackerManager = {
   firstTrack: true,
   prevTotal: 0,
   candleData: {},
+  isInitialLoad: true,
 
   async start() {
     if (this.timer) return;
@@ -24,6 +25,7 @@ export const TrackerManager = {
       ? "🚀 Pro 모드 진입 (10초 갱신)"
       : "⏳ 일반 모드 실행 (1분 갱신, 5분 종료)";
 
+    this.isInitialLoad = true;
     await this.track();
     this.timer = setInterval(() => this.track(), period);
     
@@ -52,20 +54,27 @@ export const TrackerManager = {
   },
 
   async track() {
-    // Show loading state for all charts
-    this.showLoading();
+    // Show loading state only for initial load
+    if (this.isInitialLoad) {
+      this.showLoading();
+      this.isInitialLoad = false;
+    }
 
     const output = document.getElementById("output");
     output.style.display = "block";
-    output.innerHTML = `
-      <div class="result-card">
-        <h3>실시간 포트폴리오</h3>
-        <div class="loading">
-          <div class="spinner"></div>
-          <div class="loading-text">데이터를 불러오는 중입니다...</div>
+    
+    // 초기 로딩이 아닐 때는 이전 HTML을 유지
+    if (this.isInitialLoad) {
+      output.innerHTML = `
+        <div class="result-card">
+          <h3>실시간 포트폴리오</h3>
+          <div class="loading">
+            <div class="spinner"></div>
+            <div class="loading-text">데이터를 불러오는 중입니다...</div>
+          </div>
         </div>
-      </div>
-    `;
+      `;
+    }
 
     const now = new Date();
     const cur = now.getHours() * 60 + now.getMinutes();
