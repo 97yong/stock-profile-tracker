@@ -173,7 +173,7 @@ document.getElementById("runBtn").onclick = async ()=>{
   const isPro = await verifyPassword(pw);
   const period= isPro ? 10_000 : 60_000;
   proStatus.textContent = isPro
-    ? "✅ Pro (10초 갱신)"
+    ? "🚀 Pro (10초 갱신)"
     : "⏳ 일반 (1분 갱신, 5분 종료)";
 
   await track();
