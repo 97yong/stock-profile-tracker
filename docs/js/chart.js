@@ -27,8 +27,8 @@ export const ChartManager = {
           {
             label: "현재 평가금액",
             data: [],
-            borderColor: "#3182f6",
-            backgroundColor: "rgba(49,130,246,0.1)",
+            borderColor: "rgba(49, 130, 246, 0.8)",
+            backgroundColor: "rgba(49, 130, 246, 0.1)",
             borderWidth: 2,
             fill: true,
             tension: 0.4,
@@ -39,11 +39,12 @@ export const ChartManager = {
             pointHoverBorderWidth: 2
           },
           {
-            label: "초기 평가금액",
+            label: "전일 평가금액",
             data: [],
-            borderColor: "#6b7684",
-            backgroundColor: "rgba(107,118,132,0.05)",
+            borderColor: "rgba(107, 114, 128, 0.8)",
+            backgroundColor: "rgba(107, 114, 128, 0.1)",
             borderWidth: 2,
+            borderDash: [5, 5],
             fill: true,
             tension: 0.4,
             pointRadius: 0,

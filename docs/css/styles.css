@@ -281,7 +281,7 @@
   
   .chart-card h3 {
     margin: 0 0 0.8rem 0;
-    font-size: 1.3rem;
+    font-size: 1.3rem !important;
     font-weight: 700;
     text-align: center;
     color: var(--primary);
@@ -300,21 +300,67 @@
     font-size: 1.1rem !important;
   }
   
-  .chart-card canvas#pieChart {
-    max-width: 300px;
-  }
-  
-  /* 파이 차트 텍스트 크기 조정 */
-  .chart-card canvas#pieChart + div {
-    font-size: 1.1rem !important;
-  }
-
-  .chart-card canvas#pieChart + div .chartjs-legend-item {
+  /* 차트 범례와 텍스트 스타일 */
+  .chart-card canvas + div {
     font-size: 1.1rem !important;
     font-weight: 500;
   }
 
+  .chart-card canvas + div .chartjs-legend-item {
+    font-size: 1.1rem !important;
+    font-weight: 500;
+    margin: 0.3rem 0;
+  }
+
+  .chart-card canvas + div .chartjs-legend-item-text {
+    font-size: 1.1rem !important;
+    font-weight: 500;
+  }
+
+  /* 파이 차트 특별 스타일 */
+  .chart-card canvas#pieChart {
+    max-width: 300px;
+    height: 300px !important;
+  }
+
+  .chart-card canvas#pieChart + div {
+    font-size: 1.4rem !important;
+    font-weight: 600;
+  }
+
+  .chart-card canvas#pieChart + div .chartjs-legend-item {
+    font-size: 1.4rem !important;
+    font-weight: 600;
+    margin: 0.5rem 0;
+  }
+
   .chart-card canvas#pieChart + div .chartjs-legend-item-text {
+    font-size: 1.4rem !important;
+    font-weight: 600;
+  }
+
+  /* 파이 차트 내부 텍스트 스타일 */
+  .chart-card canvas#pieChart + div .chartjs-datalabels {
+    font-size: 1.4rem !important;
+    font-weight: 600;
+  }
+
+  /* 라인 차트 특별 스타일 */
+  .chart-card canvas#lineChart {
+    height: 350px !important;
+  }
+
+  .chart-card canvas#lineChart + div {
+    font-size: 1.1rem !important;
+  }
+
+  .chart-card canvas#lineChart + div .chartjs-legend-item {
+    font-size: 1.1rem !important;
+    font-weight: 500;
+    margin: 0.3rem 0;
+  }
+
+  .chart-card canvas#lineChart + div .chartjs-legend-item-text {
     font-size: 1.1rem !important;
     font-weight: 500;
   }
