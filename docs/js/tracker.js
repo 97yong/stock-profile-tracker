@@ -19,18 +19,18 @@ export const TrackerManager = {
 
     const pw = document.getElementById("pw").value;
     const isPro = await ApiManager.verifyPassword(pw);
-    const period = isPro ? 10_000 : 60_000;
+    const period = isPro ? 10_000 : 30_000;
     
     document.getElementById("proStatus").textContent = isPro
       ? "🚀 Pro 모드 진입 (10초 갱신)"
-      : "⏳ 일반 모드 실행 (1분 갱신, 5분 종료)";
+      : "⏳ 일반 모드 실행 (30초 갱신, 3시간 종료)";
 
     this.isInitialLoad = true;
     await this.track();
     this.timer = setInterval(() => this.track(), period);
     
     if (!isPro) {
-      this.stopper = setTimeout(() => this.stop("⏱️ 자동 업데이트 종료"), 5 * 60 * 1000);
+      this.stopper = setTimeout(() => this.stop("⏱️ 자동 업데이트 종료"), 3 * 60 * 60 * 1000);
     }
   },
 
