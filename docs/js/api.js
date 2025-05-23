@@ -6,7 +6,7 @@ const CACHE_TTL = 3 * 1000; // 3초로 단축
 
 // Rate limiting
 const rateLimits = new Map();
-const RATE_LIMIT = 100; // requests per minute
+const RATE_LIMIT = 10; // requests per minute
 const RATE_WINDOW = 60 * 1000; // 1 minute
 
 // 장 운영 시간 체크
