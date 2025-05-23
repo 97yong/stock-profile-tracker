@@ -33,86 +33,64 @@ export const ApiManager = {
   },
 
   async fetchQuotes(codes) {
-    if (!Array.isArray(codes)) {
-      codes = [codes];
-    }
-
-    // 장 운영 시간이 아닌 경우 캐시된 데이터 사용
-    if (!isMarketOpen()) {
-      const cachedResults = codes.map(code => stockCache.get(code)?.data).filter(Boolean);
-      if (cachedResults.length === codes.length) {
-        return cachedResults;
-      }
-    }
-
-    // Check rate limit
-    const now = Date.now();
-    const userKey = 'default';
-    const userRequests = rateLimits.get(userKey) || [];
-    const recentRequests = userRequests.filter(time => now - time < RATE_WINDOW);
-    
-    if (recentRequests.length >= RATE_LIMIT) {
-      throw new Error('Rate limit exceeded. Please try again later.');
-    }
-    
-    // Update rate limit
-    recentRequests.push(now);
-    rateLimits.set(userKey, recentRequests);
-
-    // Check cache for all codes
-    const uncachedCodes = codes.filter(code => {
-      const cached = stockCache.get(code);
-      return !cached || now - cached.timestamp >= CACHE_TTL;
-    });
-
-    if (uncachedCodes.length === 0) {
-      return codes.map(code => stockCache.get(code).data);
-    }
-
     try {
-      const response = await fetch(CONFIG.WORKER_URL + "quote", {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codes: uncachedCodes })
-      });
+      // 캐시된 데이터 확인
+      const now = Date.now();
+      const results = {};
+      const codesToFetch = [];
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const results = Array.isArray(data) ? data : [data];
-      
-      // Cache the results
-      results.forEach(result => {
-        if (!result.error) {
-          stockCache.set(result.code, {
-            data: result,
-            timestamp: now
-          });
-        }
-      });
-
-      // Combine cached and new results
-      return codes.map(code => {
+      // 각 코드별로 캐시 확인
+      for (const code of codes) {
         const cached = stockCache.get(code);
-        return cached ? cached.data : results.find(r => r.code === code);
-      });
-    } catch (err) {
-      console.error('Failed to fetch stock data:', err);
-      // 에러 발생 시 캐시된 데이터가 있다면 사용
-      const cachedResults = codes.map(code => stockCache.get(code)?.data).filter(Boolean);
-      if (cachedResults.length > 0) {
-        console.log('Using cached data due to error');
-        return cachedResults;
+        if (cached && now - cached.timestamp < CACHE_TTL) {
+          results[code] = cached.data;
+        } else {
+          codesToFetch.push(code);
+        }
       }
-      throw err;
+
+      // 캐시되지 않은 코드가 있는 경우에만 API 호출
+      if (codesToFetch.length > 0) {
+        const response = await fetch(`${CONFIG.WORKER_URL}quotes`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ codes: codesToFetch })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to fetch stock data');
+        }
+
+        // 응답 데이터를 각 코드별로 분리하여 캐시에 저장
+        for (const code of codesToFetch) {
+          const stockData = data.data[code];
+          if (stockData) {
+            stockCache.set(code, {
+              data: stockData,
+              timestamp: now
+            });
+            results[code] = stockData;
+          }
+        }
+      }
+
+      return results;
+    } catch (error) {
+      console.error('Error in fetchQuotes:', error);
+      throw error;
     }
   },
 
   async fetchQuote(code) {
     const results = await this.fetchQuotes([code]);
-    return results[0];
+    return results[code];
   },
 
   getLastQuote(code) {

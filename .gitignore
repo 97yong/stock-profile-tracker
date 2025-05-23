@@ -64,4 +64,13 @@ out/
 # Temporary files
 *.swp
 *.swo
-*~ 
+*~
+
+# Cloudflare Workers
+.wrangler/
+.dev.vars
+wrangler.toml
+worker/
+workers-site/ 
+
+.worker.js

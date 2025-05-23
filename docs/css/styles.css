@@ -21,6 +21,49 @@
     background: #f5f8ff;
   }
   
+  /* Skeleton Loading */
+  .skeleton-row {
+    animation: skeleton-loading 1.5s infinite;
+  }
+
+  .skeleton-text {
+    height: 1em;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+    border-radius: 4px;
+    margin: 0.5em 0;
+  }
+
+  .skeleton-chart {
+    height: 40px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+    border-radius: 4px;
+  }
+
+  @keyframes skeleton-shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  @keyframes skeleton-loading {
+    0% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 0.8;
+    }
+    100% {
+      opacity: 0.6;
+    }
+  }
+  
   .pro-row {
     display: flex;
     align-items: center;

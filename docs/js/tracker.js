@@ -64,15 +64,40 @@ export const TrackerManager = {
     if (this.isInitialLoad) {
       this.showLoading();
       output.style.display = "block";
+      
+      // 스켈레톤 UI 생성
+      const rows = TableManager.getRows();
+      const skeletonRows = rows.map(() => `
+        <tr class="skeleton-row">
+          <td><div class="skeleton-text"></div></td>
+          <td><div class="skeleton-text"></div></td>
+          <td><div class="skeleton-text"></div></td>
+          <td><div class="skeleton-chart"></div></td>
+          <td><div class="skeleton-text"></div></td>
+          <td><div class="skeleton-text"></div></td>
+          <td><div class="skeleton-text"></div></td>
+          <td><div class="skeleton-text"></div></td>
+        </tr>
+      `).join('');
+
       output.innerHTML = `
         <div class="result-card">
-          <h3>실시간 포트폴리오</h3>
-          <div class="loading">
-            <div class="spinner"></div>
-            <div class="loading-text">데이터를 불러오는 중입니다...</div>
-          </div>
-        </div>
-      `;
+          <h3>실시간 포트폴리오<span class="time">${new Date().toLocaleTimeString()}</span></h3>
+          <table>
+            <tr><th>종목명</th><th>현재가</th><th>등락률</th><th>차트</th><th>수량</th><th>평균 단가</th><th>수익률</th><th>평가금액</th></tr>
+            ${skeletonRows}
+            <tr class="total-row skeleton-row">
+              <td>전체</td>
+              <td><div class="skeleton-text"></div></td>
+              <td><div class="skeleton-text"></div></td>
+              <td></td>
+              <td><div class="skeleton-text"></div></td>
+              <td><div class="skeleton-text"></div></td>
+              <td><div class="skeleton-text"></div></td>
+              <td><div class="skeleton-text"></div></td>
+            </tr>
+          </table>
+        </div>`;
       this.isInitialLoad = false;
     }
 
@@ -107,10 +132,19 @@ export const TrackerManager = {
       titleElement.innerHTML = `실시간 포트폴리오<div class="mini-spinner active"></div><span class="time">${now.toLocaleTimeString()}</span>`;
     }
 
-    let html = "";
-    const fetchPromises = rows.map(async ({name, code, qty, avg}) => {
-      try {
-        const data = await ApiManager.fetchQuote(code);
+    try {
+      // 모든 종목 데이터를 한 번에 가져오기
+      const codes = rows.map(row => row.code);
+      const stockData = await ApiManager.fetchQuotes(codes);
+      
+      let html = "";
+      rows.forEach(({name, code, qty, avg}) => {
+        const data = stockData[code];
+        if (!data) {
+          html += `<tr><td colspan="8">${code} - 데이터를 가져올 수 없습니다</td></tr>`;
+          return;
+        }
+
         const {price, change, rate, open, high, low, volume, prevClose} = data;
         
         // 캔들차트 데이터 업데이트
@@ -144,7 +178,7 @@ export const TrackerManager = {
         const sym = change > 0 ? "▲" : change < 0 ? "▼" : "-";
         const rateSign = rate > 0 ? "+" : "";
         const profSign = prof > 0 ? "+" : "";
-        return `<tr>
+        html += `<tr>
           <td>${name}</td>
           <td class="price-cell">
             <div class="main-price ${pc}">${price.toLocaleString()}</div>
@@ -162,92 +196,95 @@ export const TrackerManager = {
           <td class="${rc}">${profSign}${Math.abs(prof)}%</td>
           <td>${val.toLocaleString()}</td>
         </tr>`;
-      } catch(err) {
-        return `<tr><td colspan="8">${code} - 오류: ${err.message}</td></tr>`;
-      }
-    });
+      });
 
-    // 모든 데이터를 병렬로 가져오기
-    const results = await Promise.all(fetchPromises);
-    html = results.join('');
-
-    if (this.prevTotal === 0) {
-      for (const { code, qty } of rows) {
-        const candle = this.candleData[code];
-        if (candle && candle.prevClose) {
-          this.prevTotal += candle.prevClose * qty;
+      if (this.prevTotal === 0) {
+        for (const { code, qty } of rows) {
+          const candle = this.candleData[code];
+          if (candle && candle.prevClose) {
+            this.prevTotal += candle.prevClose * qty;
+          }
         }
       }
+
+      const totRate = ((totVal - totCost) / totCost * 100).toFixed(2);
+      const sign = totRate > 0 ? "+" : "";
+      const arrow = totChg > 0 ? "▲" : totChg < 0 ? "▼" : "-";
+      const col = totChg > 0 ? "var(--danger)" : totChg < 0 ? "var(--profit)" : "black";
+
+      // 파이 차트 데이터 정렬 및 라벨 축소
+      pieData.sort((a, b) => b.value - a.value);
+      pieData = pieData.map(item => ({
+        ...item,
+        label: item.label.length > 4 ? item.label.substring(0, 4) + '...' : item.label
+      }));
+
+      // 투자금액 대비 가중평균 수익률 계산
+      let weightedProfitRate = 0;
+      let totalInvestment = 0;
+      rows.forEach(({code, qty, avg}) => {
+        const data = this.candleData[code];
+        if (data && data.lastPrice) {
+          const investment = qty * avg;  // 투자금액
+          const profitRate = ((data.lastPrice - avg) / avg * 100);
+          weightedProfitRate += profitRate * investment;
+          totalInvestment += investment;
+        }
+      });
+      weightedProfitRate = totalInvestment > 0 ? (weightedProfitRate / totalInvestment).toFixed(2) : 0;
+
+      // 데이터 로드가 완료되면 결과 표시
+      output.innerHTML = `
+        <div class="result-card">
+          <h3>실시간 포트폴리오<span class="time">${now.toLocaleTimeString()}</span></h3>
+          <table>
+            <tr><th>종목명</th><th>현재가</th><th>등락률</th><th>차트</th><th>수량</th><th>평균 단가</th><th>수익률</th><th>평가금액</th></tr>
+            ${html}
+            <tr class="total-row">
+              <td>전체</td>
+              <td>
+                <div class="change-rate" style="color:${col}">${arrow}${Math.abs(totChg).toLocaleString()}</div>
+              </td>
+              <td>-</td>
+              <td></td>
+              <td>${totQty}</td><td>-</td>
+              <td style="color:${weightedProfitRate>0?'var(--danger)':weightedProfitRate<0?'var(--profit)':'black'}">${weightedProfitRate>0?'+':''}${Math.abs(weightedProfitRate)}%</td>
+              <td>${totVal.toLocaleString()}</td>
+            </tr>
+          </table>
+        </div>`;
+
+      // 캔들차트 다시 그리기
+      rows.forEach(({code}) => {
+        const canvas = document.getElementById(`chart-${code}`);
+        if (canvas && this.candleData[code]) {
+          const chartData = {
+            price: this.candleData[code].lastPrice,
+            open: this.candleData[code].open,
+            high: this.candleData[code].high,
+            low: this.candleData[code].low,
+            change: this.candleData[code].lastPrice - this.candleData[code].open
+          };
+          ChartManager.drawCandleChart(canvas, chartData);
+        }
+      });
+
+      ChartManager.lineChart.data.labels.push(now.toLocaleTimeString());
+      ChartManager.lineChart.data.datasets[0].data.push(totVal);
+      ChartManager.lineChart.data.datasets[1].data.push(this.prevTotal);
+      ChartManager.lineChart.update();
+
+      ChartManager.updatePie(pieData);
+    } catch (err) {
+      console.error('Error fetching stock data:', err);
+      output.innerHTML = `
+        <div class="result-card">
+          <h3>실시간 포트폴리오<span class="time">${now.toLocaleTimeString()}</span></h3>
+          <div class="error-message">데이터를 불러오는 중 오류가 발생했습니다: ${err.message}</div>
+          ${lastPortfolioHTML ? lastPortfolioHTML : ''}
+        </div>
+      `;
     }
-
-    const totRate = ((totVal - totCost) / totCost * 100).toFixed(2);
-    const sign = totRate > 0 ? "+" : "";
-    const arrow = totChg > 0 ? "▲" : totChg < 0 ? "▼" : "-";
-    const col = totChg > 0 ? "var(--danger)" : totChg < 0 ? "var(--profit)" : "black";
-
-    // 파이 차트 데이터 정렬 및 라벨 축소
-    pieData.sort((a, b) => b.value - a.value);
-    pieData = pieData.map(item => ({
-      ...item,
-      label: item.label.length > 4 ? item.label.substring(0, 4) + '...' : item.label
-    }));
-
-    // 투자금액 대비 가중평균 수익률 계산
-    let weightedProfitRate = 0;
-    let totalInvestment = 0;
-    rows.forEach(({code, qty, avg}) => {
-      const data = this.candleData[code];
-      if (data && data.lastPrice) {
-        const investment = qty * avg;  // 투자금액
-        const profitRate = ((data.lastPrice - avg) / avg * 100);
-        weightedProfitRate += profitRate * investment;
-        totalInvestment += investment;
-      }
-    });
-    weightedProfitRate = totalInvestment > 0 ? (weightedProfitRate / totalInvestment).toFixed(2) : 0;
-
-    // 데이터 로드가 완료되면 결과 표시
-    output.innerHTML = `
-      <div class="result-card">
-        <h3>실시간 포트폴리오<span class="time">${now.toLocaleTimeString()}</span></h3>
-        <table>
-          <tr><th>종목명</th><th>현재가</th><th>등락률</th><th>차트</th><th>수량</th><th>평균 단가</th><th>수익률</th><th>평가금액</th></tr>
-          ${html}
-          <tr class="total-row">
-            <td>전체</td>
-            <td>
-              <div class="change-rate" style="color:${col}">${arrow}${Math.abs(totChg).toLocaleString()}</div>
-            </td>
-            <td>-</td>
-            <td></td>
-            <td>${totQty}</td><td>-</td>
-            <td style="color:${weightedProfitRate>0?'var(--danger)':weightedProfitRate<0?'var(--profit)':'black'}">${weightedProfitRate>0?'+':''}${Math.abs(weightedProfitRate)}%</td>
-            <td>${totVal.toLocaleString()}</td>
-          </tr>
-        </table>
-      </div>`;
-
-    // 캔들차트 다시 그리기
-    rows.forEach(({code}) => {
-      const canvas = document.getElementById(`chart-${code}`);
-      if (canvas && this.candleData[code]) {
-        const chartData = {
-          price: this.candleData[code].lastPrice,
-          open: this.candleData[code].open,
-          high: this.candleData[code].high,
-          low: this.candleData[code].low,
-          change: this.candleData[code].lastPrice - this.candleData[code].open
-        };
-        ChartManager.drawCandleChart(canvas, chartData);
-      }
-    });
-
-    ChartManager.lineChart.data.labels.push(now.toLocaleTimeString());
-    ChartManager.lineChart.data.datasets[0].data.push(totVal);
-    ChartManager.lineChart.data.datasets[1].data.push(this.prevTotal);
-    ChartManager.lineChart.update();
-
-    ChartManager.updatePie(pieData);
   },
 
   showLoading() {
