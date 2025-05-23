@@ -208,7 +208,7 @@ export const ChartManager = {
             labels: {
               padding: 20,
               font: {
-                size: 18,
+                size: 12,
                 family: 'Pretendard',
                 weight: '500'
               },
@@ -226,7 +226,7 @@ export const ChartManager = {
             padding: 12,
             boxPadding: 6,
             titleFont: {
-              size: 18,
+              size: 12,
               weight: '600',
               family: 'Pretendard'
             },

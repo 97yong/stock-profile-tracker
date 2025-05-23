@@ -142,6 +142,8 @@ export const TrackerManager = {
         const pc = change > 0 ? "price-up" : change < 0 ? "price-down" : "";
         const rc = prof > 0 ? "profit-up" : prof < 0 ? "profit-down" : "";
         const sym = change > 0 ? "▲" : change < 0 ? "▼" : "-";
+        const rateSign = rate > 0 ? "+" : "";
+        const profSign = prof > 0 ? "+" : "";
         return `<tr>
           <td>${name}</td>
           <td class="price-cell">
@@ -151,13 +153,13 @@ export const TrackerManager = {
           <td class="change-cell">
             <div class="change-info">
               <div class="main-change ${pc}">${sym}${Math.abs(change).toLocaleString()}</div>
-              <div class="rate-info ${pc}">${Math.abs(rate).toFixed(2)}%</div>
+              <div class="rate-info ${pc}">${rateSign}${Math.abs(rate).toFixed(2)}%</div>
             </div>
           </td>
           <td class="mini-chart-cell"><div class="mini-chart"><canvas id="chart-${code}" width="60" height="40" style="width:60px;height:40px;"></canvas></div></td>
           <td>${qty}</td>
           <td>${avg.toLocaleString()}</td>
-          <td class="${rc}">${prof}%</td>
+          <td class="${rc}">${profSign}${Math.abs(prof)}%</td>
           <td>${val.toLocaleString()}</td>
         </tr>`;
       } catch(err) {
@@ -183,8 +185,26 @@ export const TrackerManager = {
     const arrow = totChg > 0 ? "▲" : totChg < 0 ? "▼" : "-";
     const col = totChg > 0 ? "var(--danger)" : totChg < 0 ? "var(--profit)" : "black";
 
-    // 파이 차트 데이터 정렬
+    // 파이 차트 데이터 정렬 및 라벨 축소
     pieData.sort((a, b) => b.value - a.value);
+    pieData = pieData.map(item => ({
+      ...item,
+      label: item.label.length > 4 ? item.label.substring(0, 4) + '...' : item.label
+    }));
+
+    // 투자금액 대비 가중평균 수익률 계산
+    let weightedProfitRate = 0;
+    let totalInvestment = 0;
+    rows.forEach(({code, qty, avg}) => {
+      const data = this.candleData[code];
+      if (data && data.lastPrice) {
+        const investment = qty * avg;  // 투자금액
+        const profitRate = ((data.lastPrice - avg) / avg * 100);
+        weightedProfitRate += profitRate * investment;
+        totalInvestment += investment;
+      }
+    });
+    weightedProfitRate = totalInvestment > 0 ? (weightedProfitRate / totalInvestment).toFixed(2) : 0;
 
     // 데이터 로드가 완료되면 결과 표시
     output.innerHTML = `
@@ -201,7 +221,7 @@ export const TrackerManager = {
             <td>-</td>
             <td></td>
             <td>${totQty}</td><td>-</td>
-            <td style="color:${totRate>0?'var(--danger)':totRate<0?'var(--profit)':'black'}">${sign}${Math.abs(totRate)}%</td>
+            <td style="color:${weightedProfitRate>0?'var(--danger)':weightedProfitRate<0?'var(--profit)':'black'}">${weightedProfitRate>0?'+':''}${Math.abs(weightedProfitRate)}%</td>
             <td>${totVal.toLocaleString()}</td>
           </tr>
         </table>
