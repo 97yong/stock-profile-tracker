@@ -25,7 +25,6 @@ export const TableManager = {
   },
 
   init() {
-    document.getElementById("addBtn").onclick = () => this.addRow();
     this.tbody.onclick = e => {
       if (e.target.classList.contains("del")) e.target.closest("tr").remove();
     };
