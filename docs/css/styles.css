@@ -739,33 +739,9 @@ th, td {
   font-size: 0.9rem;
 }
 
-.view-count {
-  display: flex;
-  gap: 1.5rem;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
-.view-count-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.view-count-item svg {
-  width: 16px;
-  height: 16px;
-  color: var(--text-secondary);
-}
-
 @media (max-width: 768px) {
   .footer {
       margin-top: 1rem;
       padding: 1rem;
-  }
-
-  .view-count {
-      flex-direction: column;
-      gap: 0.5rem;
   }
 }
