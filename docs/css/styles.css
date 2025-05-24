@@ -466,7 +466,7 @@
 
   /* 파이 차트 내부 텍스트 스타일 */
   .chart-card canvas#pieChart + div .chartjs-datalabels {
-    font-size: 1.4rem !important;
+    font-size: 1rem !important;
     font-weight: 600;
   }
 

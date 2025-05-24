@@ -56,7 +56,7 @@ export const ChartManager = {
       },
       options: {
         responsive: true,
-        maintainAspectRatio: false,
+        maintainAspectRatio: true,
         devicePixelRatio: 2,
         interaction: {
           intersect: false,
@@ -70,7 +70,7 @@ export const ChartManager = {
               boxWidth: 12,
               padding: 15,
               font: {
-                size: 15,
+                size: 14,
                 family: 'Pretendard',
                 weight: '600'
               },
@@ -89,8 +89,8 @@ export const ChartManager = {
             boxPadding: 6,
             usePointStyle: true,
             titleFont: {
-              size: 15,
-              weight: '600',
+              size: 14,
+              weight: '500',
               family: 'Pretendard'
             },
             bodyFont: {
@@ -122,7 +122,8 @@ export const ChartManager = {
               autoSkip: true,
               maxTicksLimit: 8,
               font: {
-                size: 12
+                size: 14,
+                weight: '500'
               }
             }
           },
@@ -139,7 +140,8 @@ export const ChartManager = {
                 }).format(value);
               },
               font: {
-                size: 12
+                size: 14,
+                weight: '500'
               }
             }
           }
@@ -248,13 +250,13 @@ export const ChartManager = {
             color: "#1f2d37",
             font: { 
               weight: "600", 
-              size: 18,
+              size: 14,
               family: 'Pretendard'
             },
             formatter: (value, ctx) => {
               const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
               const pct = ((value / sum) * 100).toFixed(1);
-              return pct >= 5 ? `${pct}%` : '';  // 5% 미만은 표시하지 않음
+              return pct >= 1 ? `${pct}%` : '';  // 1% 미만은 표시하지 않음
             }
           }
         }
