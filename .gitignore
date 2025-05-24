@@ -1,5 +1,5 @@
 # IDE - VSCode
-.vscode
+.vscode/
 *.code-workspace
 .history/
 
