@@ -16,6 +16,8 @@
 
 ## 실행화면
 
+![image](https://github.com/user-attachments/assets/0d99828c-fd10-4e30-88b3-4759614f611a)
+
 
 ## 사용 방법
 
