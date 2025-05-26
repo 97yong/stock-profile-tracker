@@ -134,10 +134,7 @@ export const ChartManager = {
             },
             ticks: {
               callback: function(value) {
-                return new Intl.NumberFormat('ko-KR', {
-                  notation: 'compact',
-                  maximumFractionDigits: 1
-                }).format(value);
+                return new Intl.NumberFormat('ko-KR').format(value) + '원';
               },
               font: {
                 size: 14,
