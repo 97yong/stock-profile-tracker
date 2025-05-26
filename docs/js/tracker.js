@@ -180,10 +180,7 @@ export const TrackerManager = {
         const profSign = prof > 0 ? "+" : "";
         html += `<tr>
           <td>${name}</td>
-          <td class="price-cell">
-            <div class="main-price ${pc}">${price.toLocaleString()}</div>
-            <div class="volume-info">거래량 ${volume?.toLocaleString() || '-'}</div>
-          </td>
+          <td class="current-price ${change > 0 ? 'positive' : change < 0 ? 'negative' : ''}">${price.toLocaleString()}</td>
           <td class="change-cell">
             <div class="change-info">
               <div class="main-change ${pc}">${sym}${Math.abs(change).toLocaleString()}</div>
@@ -193,7 +190,7 @@ export const TrackerManager = {
           <td class="mini-chart-cell"><div class="mini-chart"><canvas id="chart-${code}" width="60" height="40" style="width:60px;height:40px;"></canvas></div></td>
           <td>${qty}</td>
           <td>${avg.toLocaleString()}</td>
-          <td class="${rc}">${profSign}${Math.abs(prof)}%</td>
+          <td class="profit-rate ${prof > 0 ? 'positive' : prof < 0 ? 'negative' : ''}">${profSign}${Math.abs(prof)}%</td>
           <td>${val.toLocaleString()}</td>
         </tr>`;
       });
@@ -242,13 +239,12 @@ export const TrackerManager = {
             ${html}
             <tr class="total-row">
               <td>전체</td>
-              <td>
-                <div class="change-rate" style="color:${col}">${arrow}${Math.abs(totChg).toLocaleString()}</div>
-              </td>
+              <td class="current-price ${totChg > 0 ? 'positive' : totChg < 0 ? 'negative' : ''}">${arrow}${Math.abs(totChg).toLocaleString()}</td>
               <td>-</td>
               <td></td>
-              <td>${totQty}</td><td>-</td>
-              <td style="color:${weightedProfitRate>0?'var(--danger)':weightedProfitRate<0?'var(--profit)':'black'}">${weightedProfitRate>0?'+':''}${Math.abs(weightedProfitRate)}%</td>
+              <td>${totQty}</td>
+              <td>-</td>
+              <td class="profit-rate ${totRate > 0 ? 'positive' : totRate < 0 ? 'negative' : ''}">${sign}${Math.abs(totRate)}%</td>
               <td>${totVal.toLocaleString()}</td>
             </tr>
           </table>

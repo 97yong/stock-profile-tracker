@@ -1,13 +1,13 @@
 :root {
-    --primary-color: #6366f1;
-    --primary-hover: #4f46e5;
-    --danger-color: #ef4444;
-    --danger-hover: #dc2626;
-    --background-color: #f8fafc;
+    --primary-color: #0064FF;
+    --primary-hover: #0052CC;
+    --danger-color: #FF3B30;
+    --danger-hover: #E02E24;
+    --background-color: #F9FAFB;
     --card-background: #ffffff;
-    --text-primary: #1e293b;
-    --text-secondary: #64748b;
-    --border-color: #e2e8f0;
+    --text-primary: #191F28;
+    --text-secondary: #4E5968;
+    --border-color: #E5E8EB;
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -242,10 +242,22 @@ tbody tr:hover {
   background: #ffeaea;
 }
   
-.price-up{color:var(--danger-color);font-weight:600}
-.price-down{color:var(--primary-color);font-weight:600}
-.profit-up{color:var(--danger-color);font-weight:600}
-.profit-down{color:var(--primary-color);font-weight:600}
+.price-up {
+    color: var(--danger-color);
+    font-weight: 600;
+}
+.price-down {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+.profit-up {
+    color: var(--danger-color);
+    font-weight: 600;
+}
+.profit-down {
+    color: var(--primary-color);
+    font-weight: 600;
+}
 .total-row{background:#f9fafb;font-weight:700}
 .change-rate{font-size:0.8rem;color:inherit;opacity:0.8;margin-top:0.2rem}
   
@@ -744,4 +756,29 @@ th, td {
       margin-top: 1rem;
       padding: 1rem;
   }
+}
+
+/* 현재가와 수익률 셀 스타일 */
+td.current-price {
+    font-weight: 600;
+}
+
+td.current-price.positive {
+    color: var(--danger-color);
+}
+
+td.current-price.negative {
+    color: var(--primary-color);
+}
+
+td.profit-rate {
+    font-weight: 600;
+}
+
+td.profit-rate.positive {
+    color: var(--danger-color);
+}
+
+td.profit-rate.negative {
+    color: var(--primary-color);
 }
